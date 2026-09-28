@@ -1,0 +1,201 @@
+/* 登录页面样式 */
+.login-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #fff;
+  padding: 60rpx 40rpx;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* 背景装饰 */
+.background-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 装饰圆圈 */
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.15;
+  background-color: #06B6D4;
+}
+
+.circle-1 {
+  width: 300rpx;
+  height: 300rpx;
+  top: -100rpx;
+  left: -100rpx;
+}
+
+.circle-2 {
+  width: 400rpx;
+  height: 400rpx;
+  top: -150rpx;
+  right: -150rpx;
+}
+
+.circle-3 {
+  width: 250rpx;
+  height: 250rpx;
+  bottom: -100rpx;
+  left: 50rpx;
+}
+
+.circle-4 {
+  width: 350rpx;
+  height: 350rpx;
+  bottom: -150rpx;
+  right: 50rpx;
+  background-color: #0a7ab8;
+  opacity: 0.1;
+}
+
+/* 主要内容 */
+.main-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 500rpx;
+}
+
+/* 标题 */
+.title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+  text-align: center;
+}
+
+/* 副标题 */
+.subtitle {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 120rpx;
+  text-align: center;
+}
+
+/* 登录按钮 */
+.login-btn {
+  width: 100%;
+  height: 100rpx;
+  background-color: #06B6D4;
+  color: #fff;
+  font-size: 34rpx;
+  font-weight: 600;
+  border-radius: 50rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  margin-bottom: 40rpx;
+  box-shadow: 0 8rpx 24rpx rgba(6, 182, 212, 0.2);
+}
+
+.login-btn:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 4rpx 12rpx rgba(6, 182, 212, 0.3);
+}
+
+/* 取消按钮 */
+.cancel-btn {
+  font-size: 28rpx;
+  color: #999;
+  padding: 15rpx 40rpx;
+  border-radius: 25rpx;
+  transition: all 0.3s ease;
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.cancel-btn:active {
+  color: #666;
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+/* 已登录状态 */
+.logged-in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 400rpx;
+}
+
+/* 用户信息 */
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 50rpx;
+  background-color: #fff;
+  padding: 30rpx;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 15rpx rgba(0, 0, 0, 0.05);
+  width: 100%;
+  box-sizing: border-box;
+  border: 1rpx solid #f0f0f0;
+}
+
+/* 头像 */
+.avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  margin-right: 20rpx;
+}
+
+/* 用户详情 */
+.user-detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* 昵称 */
+.nickname {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+/* 登录提示 */
+.tip {
+  font-size: 22rpx;
+  color: #06B6D4;
+}
+
+/* 返回按钮 */
+.back-btn {
+  width: 100%;
+  height: 88rpx;
+  background-color: #252629;
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 500;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.back-btn:active {
+  transform: translateY(1rpx);
+  background-color: #1a1b1e;
+}

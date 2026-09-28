@@ -1,0 +1,74 @@
+<view class="container">
+  <view class="header">
+    <view class="title">{{title}}</view>
+    <view class="desc">轻点图片放大编辑，长按拖动可与目标格子交换</view>
+  </view>
+
+  <view class="grid" style="grid-template-columns: repeat({{cols}}, 1fr); transform: scale({{gridScale || 1}}); margin-bottom: {{gridMarginBottom || 0}}px;">
+    <view
+      wx:for="{{items}}"
+      wx:key="id"
+      class="grid-item {{selectedIndex === index ? 'active' : ''}} {{isSorting && dragFromIndex === index ? 'dragging' : ''}}"
+      style="aspect-ratio: 1 / {{cellRatio}};"
+      data-index="{{index}}"
+      bindtap="selectCell"
+      bindlongpress="onSortStart"
+      catchtouchmove="onSortMove"
+      catchtouchend="onSortEnd"
+      catchtouchcancel="onSortEnd"
+    >
+      <view
+        class="img-viewport"
+        data-index="{{index}}"
+      >
+        <image
+          class="grid-image"
+          src="{{item.path}}"
+          mode="aspectFill"
+          style="transform: translate({{item.offsetX}}px, {{item.offsetY}}px) scale({{item.scale}}) rotate({{item.rotate}}deg);"
+        ></image>
+      </view>
+      <view class="index-badge">{{index + 1}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{toolPanelVisible}}" class="image-action-modal" catchtouchmove="preventModalMove">
+    <view class="image-action-backdrop" catchtap="hideImageTools"></view>
+    <view class="image-action-panel" catchtap="stopToolMaskTap">
+      <view class="image-action-header">
+        <view class="image-action-buttons">
+          <view class="image-action-btn" catchtap="rotateSelected">
+            <image class="tool-icon" src="/images/icon/rotate.svg" mode="aspectFit"></image>
+            <text>旋转</text>
+          </view>
+          <view class="image-action-btn" catchtap="resetSelected">
+            <image class="tool-icon" src="/images/icon/refresh.svg" mode="aspectFit"></image>
+            <text>重置</text>
+          </view>
+          <view class="image-action-btn" catchtap="replaceSelectedImage">
+            <image class="tool-icon" src="/images/icon/add-image.svg" mode="aspectFit"></image>
+            <text>替换</text>
+          </view>
+        </view>
+        <view class="image-action-close" catchtap="hideImageTools">×</view>
+      </view>
+      <view class="image-action-preview" style="aspect-ratio: 1 / {{cellRatio}};">
+        <image
+          class="image-action-preview-img"
+          src="{{selectedItem.path}}"
+          mode="aspectFill"
+          style="transform: translate({{selectedItem.offsetX}}px, {{selectedItem.offsetY}}px) scale({{selectedItem.scale}}) rotate({{selectedItem.rotate}}deg);"
+        ></image>
+        <view class="image-action-index">{{selectedIndex + 1}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="footer">
+    <button class="main-btn save" bindtap="oneKeySave">一键保存</button>
+    <button class="main-btn share" bindtap="goSharePage">分享给好友</button>
+  </view>
+
+  <canvas canvas-id="editCanvas" style="width: {{canvasWidth}}px; height: {{canvasHeight}}px; position: fixed; left: -3000px; top: -3000px;"></canvas>
+  <canvas canvas-id="shareCanvas" style="width: 1200px; height: 1200px; position: fixed; left: -4000px; top: -4000px;"></canvas>
+</view>

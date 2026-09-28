@@ -1,0 +1,162 @@
+<view class="container">
+  <!-- 引导页 -->
+  <view class="guide-page" wx:if="{{!hasStarted}}">
+    <view class="guide-header">
+      <text class="guide-title">电影感拼图</text>
+      <text class="guide-subtitle">从经典台词中汲取力量</text>
+    </view>
+    
+    <view class="guide-content">
+      <image src="/images/home/hero.jpg" mode="aspectFill" class="guide-hero-img"></image>
+      <view class="hero-text-overlay">
+        <view class="hero-text-item">
+          <text class="cn">我喜欢一个词叫“不破不立”</text>
+          <text class="en">I like a word called "unbreakable"</text>
+        </view>
+        <view class="hero-text-item">
+          <text class="cn">不管是消耗你的人</text>
+          <text class="en">No matter who consumes you</text>
+        </view>
+        <view class="hero-text-item">
+          <text class="cn">还是让你恐惧和焦虑的事</text>
+          <text class="en">Or isitsomething that causes you fear and anxiety</text>
+        </view>
+        <view class="hero-text-item">
+          <text class="cn">又或者是脆弱敏感的你</text>
+          <text class="en">Or the fragile and sensitive you</text>
+        </view>
+        <view class="hero-text-item">
+          <text class="cn">你必须打破他们</text>
+          <text class="en">You must break them</text>
+        </view>
+        <view class="hero-text-item">
+          <text class="cn">才能获得新生</text>
+        </view>
+      </view>
+    </view>
+    
+    <view class="guide-footer">
+      <view class="start-btn" bindtap="startExperience">立即体验</view>
+    </view>
+  </view>
+
+  <!-- 编辑页面 -->
+  <block wx:else>
+    <scroll-view scroll-y class="preview-stack">
+      <view class="images-wrapper" style="background-color: {{borderColor}};">
+        <view class="stack-item" wx:for="{{images}}" wx:key="index" bindtap="openEditModal" data-index="{{index}}"
+              style="height: {{ (750 / item.width * item.height) * (item.cropHeight / 100) }}rpx; margin-bottom: {{index < images.length - 1 ? borderWidth : 0}}rpx;">
+          <image src="{{item.path}}" mode="widthFix" 
+                 style="width: 750rpx; margin-top: -{{ (750 / item.width * item.height) * (item.cropY / 100) }}rpx;" />
+          
+          <!-- Subtitle Overlay (Preview) -->
+          <view class="subtitle-overlay" wx:if="{{item.text}}">
+            <text class="subtitle-text">{{item.text}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- Empty State / Add Button if list is empty or at end -->
+      <view class="add-btn-area" bindtap="chooseImages">
+        <view class="add-btn">
+          <image src="/images/icon/add-image.svg" class="add-icon"></image>
+          <text>添加图片</text>
+        </view>
+      </view>
+      
+      <view style="height: 350rpx;"></view>
+    </scroll-view>
+
+    <view class="bottom-bar">
+      <view class="border-settings">
+        <view class="setting-item">
+          <text class="setting-label">间隔边框</text>
+          <view class="options-group">
+            <view class="option-btn {{borderWidth === 0 ? 'active' : ''}}" bindtap="setBorderWidth" data-val="0">无</view>
+            <view class="option-btn {{borderWidth === 10 ? 'active' : ''}}" bindtap="setBorderWidth" data-val="10">细</view>
+            <view class="option-btn {{borderWidth === 20 ? 'active' : ''}}" bindtap="setBorderWidth" data-val="20">中</view>
+            <view class="option-btn {{borderWidth === 40 ? 'active' : ''}}" bindtap="setBorderWidth" data-val="40">粗</view>
+          </view>
+        </view>
+        <view class="setting-item" wx:if="{{borderWidth > 0}}">
+          <text class="setting-label">边框颜色</text>
+          <view class="color-options">
+            <view class="color-btn {{borderColor === '#ffffff' ? 'active' : ''}} color-white" bindtap="setBorderColor" data-val="#ffffff"></view>
+            <view class="color-btn {{borderColor === '#000000' ? 'active' : ''}}" style="background: #000000;" bindtap="setBorderColor" data-val="#000000"></view>
+            <view class="color-btn {{borderColor === '#f0f0f0' ? 'active' : ''}}" style="background: #f0f0f0;" bindtap="setBorderColor" data-val="#f0f0f0"></view>
+            <view class="color-btn {{borderColor === '#888888' ? 'active' : ''}}" style="background: #888888;" bindtap="setBorderColor" data-val="#888888"></view>
+          </view>
+        </view>
+      </view>
+      <view class="action-btn primary" bindtap="generate">生成长图</view>
+    </view>
+
+    <!-- Edit Modal -->
+    <view class="modal-overlay" wx:if="{{showModal}}">
+      <view class="modal-content">
+        <view class="modal-header">
+          <text>调整图片</text>
+          <view class="close-btn" bindtap="closeEditModal">
+            <image src="/images/icon/close.svg" class="icon-small"></image>
+          </view>
+        </view>
+        
+        <view class="modal-body">
+          <!-- Image Preview with Crop Guides -->
+          <view class="image-preview-wrapper" 
+                bindtouchstart="onTouchStart" 
+                bindtouchmove="onTouchMove" 
+                bindtouchend="onTouchEnd">
+            <image src="{{editingImage.path}}" mode="widthFix" class="preview-source-image"></image>
+            
+            <!-- Crop Masks -->
+            <view class="mask-top" style="height: {{editingImage.cropY}}%;"></view>
+            <view class="mask-bottom" style="height: {{100 - editingImage.cropY - editingImage.cropHeight}}%;"></view>
+            
+            <!-- Visual Guide Line / Handles -->
+            <view class="guide-line-top" style="top: {{editingImage.cropY}}%;"></view>
+            <view class="crop-handle top" style="top: {{editingImage.cropY}}%;" 
+                  catchtouchstart="onHandleTouchStart" data-type="top">
+               <view class="handle-bar"></view>
+            </view>
+            
+            <view class="guide-line-bottom" style="top: {{editingImage.cropY + editingImage.cropHeight}}%;"></view>
+            <view class="crop-handle bottom" style="top: {{editingImage.cropY + editingImage.cropHeight}}%;" 
+                  catchtouchstart="onHandleTouchStart" data-type="bottom">
+               <view class="handle-bar"></view>
+            </view>
+          </view>
+
+          <view class="text-input-row">
+            <input class="subtitle-input" placeholder="请输入台词" value="{{editingImage.text}}" bindinput="onEditTextInput" />
+            <view class="random-btn" bindtap="randomEditSubtitle">
+              <text>🎲</text>
+            </view>
+          </view>
+          
+          <view class="edit-toolbar">
+            <view class="tool-item" bindtap="replaceImage">
+              <image src="/images/icon/refresh.svg" class="tool-icon"></image>
+              <text>替换</text>
+            </view>
+            <view class="tool-item" bindtap="deleteCurrentEditingImage">
+              <image src="/images/icon/delete.svg" class="tool-icon"></image>
+              <text>删除</text>
+            </view>
+            <view class="tool-item" bindtap="addImage">
+              <image src="/images/icon/add-image.svg" class="tool-icon"></image>
+              <text>新增</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="modal-footer">
+          <view class="footer-btn confirm" bindtap="confirmEdit">完成</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Offscreen Canvas -->
+    <canvas type="2d" id="canvas" class="offscreen-canvas"></canvas>
+  </block>
+</view>

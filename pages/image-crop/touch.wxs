@@ -1,0 +1,257 @@
+var startX = 0;
+var startY = 0;
+var startImgX = 0;
+var startImgY = 0;
+var startViewportX = 0;
+var startViewportY = 0;
+var startViewportW = 0;
+var startViewportH = 0;
+
+var currentViewportX = 0;
+var currentViewportY = 0;
+var currentViewportW = 0;
+var currentViewportH = 0;
+var currentImgX = 0;
+var currentImgY = 0;
+
+var activeCorner = '';
+var isDragging = false;
+var isCornerDragging = false;
+var minSize = 50;
+
+function getImageBounds(viewportX, viewportY, imgX, imgY, imgDrawWidth, imgDrawHeight, imgScale) {
+  var imgLeft = viewportX + imgX + (imgDrawWidth / 2) * (1 - imgScale);
+  var imgTop = viewportY + imgY + (imgDrawHeight / 2) * (1 - imgScale);
+  var imgW = imgDrawWidth * imgScale;
+  var imgH = imgDrawHeight * imgScale;
+  
+  return {
+    left: imgLeft,
+    top: imgTop,
+    right: imgLeft + imgW,
+    bottom: imgTop + imgH,
+    width: imgW,
+    height: imgH
+  };
+}
+
+function touchstart(event, ownerInstance) {
+  var touch = event.touches[0];
+  var dataset = event.instance.getDataset();
+  
+  startX = touch.clientX;
+  startY = touch.clientY;
+  
+  startImgX = dataset.imgX;
+  startImgY = dataset.imgY;
+  startViewportX = dataset.viewportX;
+  startViewportY = dataset.viewportY;
+  startViewportW = dataset.viewportW;
+  startViewportH = dataset.viewportH;
+  
+  currentViewportX = startViewportX;
+  currentViewportY = startViewportY;
+  currentViewportW = startViewportW;
+  currentViewportH = startViewportH;
+  currentImgX = startImgX;
+  currentImgY = startImgY;
+  
+  if (dataset.corner) {
+    isCornerDragging = true;
+    activeCorner = dataset.corner;
+  } else {
+    isDragging = true;
+  }
+}
+
+function touchmove(event, ownerInstance) {
+  if (!isDragging && !isCornerDragging) return;
+  
+  var touch = event.touches[0];
+  var dx = touch.clientX - startX;
+  var dy = touch.clientY - startY;
+  var dataset = event.instance.getDataset();
+  
+  var newImgX = startImgX;
+  var newImgY = startImgY;
+  var newViewportX = startViewportX;
+  var newViewportY = startViewportY;
+  var newViewportW = startViewportW;
+  var newViewportH = startViewportH;
+  
+  if (isDragging) {
+    newImgX = startImgX + dx;
+    newImgY = startImgY + dy;
+    
+    var imgInstance = ownerInstance.selectComponent('.target-image');
+    if (imgInstance) {
+      var scale = dataset.imgScale;
+      var rotate = dataset.imgRotate;
+      imgInstance.setStyle({
+        transform: 'translate(' + newImgX + 'px, ' + newImgY + 'px) scale(' + scale + ') rotate(' + rotate + 'deg)'
+      });
+    }
+    
+  } else if (isCornerDragging) {
+    var imgDrawWidth = dataset.imgDrawW;
+    var imgDrawHeight = dataset.imgDrawH;
+    var imgScale = dataset.imgScale;
+    
+    var imgBounds = getImageBounds(startViewportX, startViewportY, startImgX, startImgY, imgDrawWidth, imgDrawHeight, imgScale);
+    
+    if (activeCorner === 'tl') {
+      newViewportX += dx;
+      newViewportY += dy;
+      newViewportW -= dx;
+      newViewportH -= dy;
+      newImgX -= dx;
+      newImgY -= dy;
+      
+      if (newViewportX < imgBounds.left) {
+        var overX = imgBounds.left - newViewportX;
+        newViewportX = imgBounds.left;
+        newViewportW -= overX;
+        newImgX += overX;
+      }
+      if (newViewportY < imgBounds.top) {
+        var overY = imgBounds.top - newViewportY;
+        newViewportY = imgBounds.top;
+        newViewportH -= overY;
+        newImgY += overY;
+      }
+      
+    } else if (activeCorner === 'tr') {
+      newViewportY += dy;
+      newViewportW += dx;
+      newViewportH -= dy;
+      newImgY -= dy;
+      
+      if (newViewportY < imgBounds.top) {
+        var overY = imgBounds.top - newViewportY;
+        newViewportY = imgBounds.top;
+        newViewportH -= overY;
+        newImgY += overY;
+      }
+      if (newViewportX + newViewportW > imgBounds.right) {
+        newViewportW = imgBounds.right - newViewportX;
+      }
+      
+    } else if (activeCorner === 'bl') {
+      newViewportX += dx;
+      newViewportW -= dx;
+      newViewportH += dy;
+      newImgX -= dx;
+      
+      if (newViewportX < imgBounds.left) {
+        var overX = imgBounds.left - newViewportX;
+        newViewportX = imgBounds.left;
+        newViewportW -= overX;
+        newImgX += overX;
+      }
+      if (newViewportY + newViewportH > imgBounds.bottom) {
+        newViewportH = imgBounds.bottom - newViewportY;
+      }
+      
+    } else if (activeCorner === 'br') {
+      newViewportW += dx;
+      newViewportH += dy;
+      
+      if (newViewportX + newViewportW > imgBounds.right) {
+        newViewportW = imgBounds.right - newViewportX;
+      }
+      if (newViewportY + newViewportH > imgBounds.bottom) {
+        newViewportH = imgBounds.bottom - newViewportY;
+      }
+    }
+    
+    if (newViewportW < minSize) {
+       if (activeCorner === 'tl' || activeCorner === 'bl') {
+          var diffW = minSize - newViewportW;
+          newViewportX -= diffW;
+          newImgX += diffW; 
+          newViewportW = minSize;
+       } else {
+          newViewportW = minSize;
+       }
+    }
+    if (newViewportH < minSize) {
+       if (activeCorner === 'tl' || activeCorner === 'tr') {
+          var diffH = minSize - newViewportH;
+          newViewportY -= diffH;
+          newImgY += diffH;
+          newViewportH = minSize;
+       } else {
+          newViewportH = minSize;
+       }
+    }
+    
+    var wrapper = ownerInstance.selectComponent('.image-wrapper');
+    if (wrapper) {
+      wrapper.setStyle({
+        left: newViewportX + 'px',
+        top: newViewportY + 'px',
+        width: newViewportW + 'px',
+        height: newViewportH + 'px'
+      });
+    }
+    
+    var frame = ownerInstance.selectComponent('.crop-frame');
+    if (frame) {
+      frame.setStyle({
+        left: newViewportX + 'px',
+        top: newViewportY + 'px',
+        width: newViewportW + 'px',
+        height: newViewportH + 'px'
+      });
+    }
+    
+    var maskTop = ownerInstance.selectComponent('.mask.top');
+    var maskBottom = ownerInstance.selectComponent('.mask.bottom');
+    var maskLeft = ownerInstance.selectComponent('.mask.left');
+    var maskRight = ownerInstance.selectComponent('.mask.right');
+    
+    if (maskTop) maskTop.setStyle({ height: newViewportY + 'px' });
+    if (maskBottom) maskBottom.setStyle({ top: (newViewportY + newViewportH) + 'px' });
+    if (maskLeft) maskLeft.setStyle({ width: newViewportX + 'px', top: newViewportY + 'px', height: newViewportH + 'px' });
+    if (maskRight) maskRight.setStyle({ left: (newViewportX + newViewportW) + 'px', top: newViewportY + 'px', height: newViewportH + 'px' });
+    
+    var imgInstance = ownerInstance.selectComponent('.target-image');
+    if (imgInstance) {
+      var scale = dataset.imgScale;
+      var rotate = dataset.imgRotate;
+      imgInstance.setStyle({
+        transform: 'translate(' + newImgX + 'px, ' + newImgY + 'px) scale(' + scale + ') rotate(' + rotate + 'deg)'
+      });
+    }
+  }
+  
+  // Update globals
+  currentViewportX = newViewportX;
+  currentViewportY = newViewportY;
+  currentViewportW = newViewportW;
+  currentViewportH = newViewportH;
+  currentImgX = newImgX;
+  currentImgY = newImgY;
+}
+
+function touchend(event, ownerInstance) {
+  if (!isDragging && !isCornerDragging) return;
+  
+  ownerInstance.callMethod('syncData', {
+    viewportX: currentViewportX,
+    viewportY: currentViewportY,
+    viewportWidth: currentViewportW,
+    viewportHeight: currentViewportH,
+    imgX: currentImgX,
+    imgY: currentImgY
+  });
+  
+  isDragging = false;
+  isCornerDragging = false;
+}
+
+module.exports = {
+  touchstart: touchstart,
+  touchmove: touchmove,
+  touchend: touchend
+};

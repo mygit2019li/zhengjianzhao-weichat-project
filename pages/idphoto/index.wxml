@@ -1,0 +1,744 @@
+<view class="container">
+  <!-- 胶囊式标签页 -->
+  <view class="capsule-tab-container">
+    <view class="capsule-tab-item {{currentModule === 'make' ? 'active' : ''}}" bindtap="switchModule" data-module="make">
+      <text>证件照制作</text>
+    </view>
+    <view class="capsule-tab-item {{currentModule === 'changeBg' ? 'active' : ''}}" bindtap="switchModule" data-module="changeBg">
+      <text>证件照换底色</text>
+    </view>
+  </view>
+  
+  <!-- 证件照制作模块 -->
+  <view wx:if="{{currentModule === 'make'}}" class="module-content">
+    <view class="make-upload-layout">
+      <view class="upload-icon-container">
+        <!-- 图片上传按钮 -->
+        <view class="upload-btn-item" bindtap="uploadImageFromAlbum">
+          <view class="upload-btn-icon-wrap album">
+            <image src="/images/icon/上传.svg" mode="aspectFit" class="upload-btn-icon-img upload-btn-icon-img-sc"></image>
+          </view>
+          <text class="upload-btn-label">打开相册</text>
+        </view>
+        <!-- 拍照按钮 -->
+        <view class="upload-btn-item" bindtap="uploadImageFromCamera">
+          <view class="upload-btn-icon-wrap camera">
+            <image src="/images/icon/拍照.svg" mode="aspectFit" class="upload-btn-icon-img"></image>
+          </view>
+          <text class="upload-btn-label">打开相机</text>
+        </view>
+      </view>
+      <view class="section make-preview-section">
+        <view class="upload-preview-container" bindtap="uploadImageFromAlbum">
+          <!-- 未上传图片时显示上传按钮 -->
+          <view wx:if="{{!imagePath}}" class="upload-buttons">
+           <text class="upload-btn-text">上传人像照片</text>
+          </view>
+          <!-- 上传图片后显示预览 -->
+          <view wx:if="{{imagePath}}" class="image-preview-wrapper">
+            <image src="{{imagePath}}" mode="aspectFit" class="preview-image" catchtap="uploadImage"></image>
+            
+            <!-- 裁剪区域 -->
+            <view wx:if="{{showCropArea}}" class="crop-container">
+              <!-- 半透明遮罩 -->
+              <view class="crop-mask"></view>
+              <!-- 裁剪框 -->
+              <view class="crop-frame" 
+                    style="width: {{cropAreaWidth}}px; height: {{cropAreaHeight}}px; left: {{cropX}}px; top: {{cropY}}px;"
+                    bindtouchstart="startMoveCrop"
+                    bindtouchmove="moveCrop"
+                    bindtouchend="endMoveCrop">
+                <!-- 裁剪控制点 -->
+                <view class="crop-handle top-left"></view>
+                <view class="crop-handle top-right"></view>
+                <view class="crop-handle bottom-left"></view>
+                <view class="crop-handle bottom-right"></view>
+              </view>
+              <!-- 裁剪操作按钮 -->
+              <view class="crop-controls">
+                <view class="crop-btn cancel" bindtap="cancelCrop">取消</view>
+                <view class="crop-btn confirm" bindtap="confirmCrop">确认</view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 证件照设置模块：包含尺寸和背景颜色选择 -->
+    <view class="card">
+      <view class="setting-header">
+        <view class="tab-container">
+          <view class="tab-item {{activeTab === 'size' ? 'active' : ''}}" bindtap="switchTab" data-tab="size">
+            <text>尺寸</text>
+          </view>
+          <view class="tab-item {{activeTab === 'color' ? 'active' : ''}}" bindtap="switchTab" data-tab="color">
+            <text>背景</text>
+          </view>
+          <view class="tab-item {{activeTab === 'beauty' ? 'active' : ''}}" bindtap="switchTab" data-tab="beauty">
+            <text>美颜</text>
+          </view>
+          <!-- <view class="tab-item {{activeTab === 'watermark' ? 'active' : ''}}" bindtap="switchTab" data-tab="watermark">
+            <text>水印</text>
+          </view> -->
+          <view class="tab-item {{activeTab === 'print' ? 'active' : ''}}" bindtap="switchTab" data-tab="print">
+            <text>打印排版</text>
+          </view>
+          <view class="tab-item {{activeTab === 'advanced' ? 'active' : ''}}" bindtap="switchTab" data-tab="advanced">
+            <text>高级参数</text>
+          </view>
+        </view>
+        <view class="btn-container">
+          <view class="btn {{imagePath ? '' : 'disabled'}}" bindtap="startMaking" data-disabled="{{!imagePath}}">
+            <text>开始制作</text>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 尺寸选择内容 -->
+      <view class="tab-content" wx:if="{{activeTab === 'size'}}">
+        <view class="size-list">
+          <view class="size-item {{selectedSize === '1' ? 'active' : ''}}" bindtap="selectSize" data-size="1">
+            <text>1寸 (2.5×3.5cm)</text>
+          </view>
+          <view class="size-item {{selectedSize === '2' ? 'active' : ''}}" bindtap="selectSize" data-size="2">
+            <text>小一寸 (2.2×3.2cm)</text>
+          </view>
+          <view class="size-item {{selectedSize === '3' ? 'active' : ''}}" bindtap="selectSize" data-size="3">
+            <text>大一寸 (3.3×4.8cm)</text>
+          </view>
+          <view class="size-item {{selectedSize === '4' ? 'active' : ''}}" bindtap="selectSize" data-size="4">
+            <text>二寸 (3.5×5.3cm)</text>
+          </view>
+          <view class="size-item {{selectedSize === '19' ? 'active' : ''}}" bindtap="selectSize" data-size="19">
+            <text>小二寸 (3.3×4.8cm)</text>
+          </view>
+          <view class="size-item {{selectedSize === '20' ? 'active' : ''}}" bindtap="selectSize" data-size="20">
+            <text>大二寸 (3.5×5.3cm)</text>
+          </view>
+          <!-- 动态显示选中的特殊尺寸 -->
+          <view wx:if="{{selectedSpecialSize}}" class="size-item active special-selected">
+            <text>{{selectedSpecialSize}}</text>
+          </view>
+          <view class="size-item special" bindtap="showExamSizes">
+            <text>考试专用尺寸</text>
+          </view>
+          <view class="size-item special" bindtap="showCertSizes">
+            <text>证件专用尺寸</text>
+          </view>
+          <!-- 自定义尺寸选项 -->
+          <view class="size-item special" bindtap="goToCustomSize">
+            <text>自定义尺寸</text>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 背景颜色选择内容 -->
+      <view class="tab-content" wx:if="{{activeTab === 'color'}}">
+        <view class="color-list new-style">
+          <view class="color-option" wx:for="{{backgroundColorOptions}}" wx:key="key" bindtap="selectColor" data-color="{{item.key}}">
+            <view class="color-item" style="background: {{item.preview}}; border: 2px solid {{selectedColor === item.key ? '#1296db' : 'transparent'}}" data-color="{{item.key}}"></view>
+            <text class="color-name">{{item.name}}</text>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 美颜功能内容 -->
+      <view class="tab-content" wx:if="{{activeTab === 'beauty'}}">
+        <view class="beauty-section">
+          <!-- 美白强度 -->
+          <view class="beauty-item">
+            <view class="beauty-header">
+              <text class="beauty-label">美白强度</text>
+              <view class="beauty-value-container">
+                <text class="beauty-value">{{beautyParams.whiteness}}</text>
+                <text class="beauty-reset" bindtap="resetBeautyParam" data-param="whiteness">↺</text>
+              </view>
+            </view>
+            <view class="slider-container">
+              <text class="slider-min">0</text>
+              <slider class="beauty-slider" min="0" max="15" value="{{beautyParams.whiteness}}" activeColor="#ff7f50" backgroundColor="#ccc" block-size="20" bindchange="onBeautyParamChange" data-param="whiteness"></slider>
+              <text class="slider-max">15</text>
+            </view>
+          </view>
+          
+          <!-- 亮度、对比度、饱和度 -->
+          <view class="beauty-row">
+            <!-- 亮度强度 -->
+            <view class="beauty-item beauty-item-small">
+              <view class="beauty-header-small">
+                <text class="beauty-label-small">亮度强度</text>
+                <view class="beauty-value-container-small">
+                  <text class="beauty-value-small">{{beautyParams.brightness}}</text>
+                  <text class="beauty-reset-small" bindtap="resetBeautyParam" data-param="brightness">↺</text>
+                </view>
+              </view>
+              <view class="slider-container-small">
+                <text class="slider-min-small">-5</text>
+                <slider class="beauty-slider-small" min="-5" max="25" value="{{beautyParams.brightness}}" activeColor="#ff7f50" backgroundColor="#ccc" block-size="16" bindchange="onBeautyParamChange" data-param="brightness"></slider>
+                <text class="slider-max-small">25</text>
+              </view>
+            </view>
+            
+            <!-- 对比度强度 -->
+            <view class="beauty-item beauty-item-small">
+              <view class="beauty-header-small">
+                <text class="beauty-label-small">对比度强度</text>
+                <view class="beauty-value-container-small">
+                  <text class="beauty-value-small">{{beautyParams.contrast}}</text>
+                  <text class="beauty-reset-small" bindtap="resetBeautyParam" data-param="contrast">↺</text>
+                </view>
+              </view>
+              <view class="slider-container-small">
+                <text class="slider-min-small">-10</text>
+                <slider class="beauty-slider-small" min="-10" max="50" value="{{beautyParams.contrast}}" activeColor="#ff7f50" backgroundColor="#ccc" block-size="16" bindchange="onBeautyParamChange" data-param="contrast"></slider>
+                <text class="slider-max-small">50</text>
+              </view>
+            </view>
+            
+            <!-- 饱和度强度 -->
+            <view class="beauty-item beauty-item-small">
+              <view class="beauty-header-small">
+                <text class="beauty-label-small">饱和度强度</text>
+                <view class="beauty-value-container-small">
+                  <text class="beauty-value-small">{{beautyParams.saturation}}</text>
+                  <text class="beauty-reset-small" bindtap="resetBeautyParam" data-param="saturation">↺</text>
+                </view>
+              </view>
+              <view class="slider-container-small">
+                <text class="slider-min-small">-10</text>
+                <slider class="beauty-slider-small" min="-10" max="50" value="{{beautyParams.saturation}}" activeColor="#ff7f50" backgroundColor="#ccc" block-size="16" bindchange="onBeautyParamChange" data-param="saturation"></slider>
+                <text class="slider-max-small">50</text>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 锐化强度 -->
+          <view class="beauty-item">
+            <view class="beauty-header">
+              <text class="beauty-label">锐化强度</text>
+              <view class="beauty-value-container">
+                <text class="beauty-value">{{beautyParams.sharpen}}</text>
+                <text class="beauty-reset" bindtap="resetBeautyParam" data-param="sharpen">↺</text>
+              </view>
+            </view>
+            <view class="slider-container">
+              <text class="slider-min">0</text>
+              <slider class="beauty-slider" min="0" max="5" value="{{beautyParams.sharpen}}" activeColor="#ff7f50" backgroundColor="#ccc" block-size="20" bindchange="onBeautyParamChange" data-param="sharpen"></slider>
+              <text class="slider-max">5</text>
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 水印功能内容 -->
+      <view class="tab-content" wx:if="{{activeTab === 'watermark'}}">
+        <view class="watermark-section compact">
+          <!-- 添加/不添加水印选项 -->
+          <view class="watermark-toggle compact">
+            <text class="watermark-toggle-title">水印</text>
+            <radio-group class="toggle-options" bindchange="onWatermarkToggleChange" name="watermark">
+              <label class="toggle-option">
+                <radio value="false" checked="{{!watermarkEnabled}}">不添加</radio>
+              </label>
+              <label class="toggle-option">
+                <radio value="true" checked="{{watermarkEnabled}}">添加</radio>
+              </label>
+            </radio-group>
+          </view>
+          
+          <!-- 水印文字和颜色 -->
+          <view class="watermark-row compact">
+            <!-- 水印文字 -->
+            <view class="watermark-item watermark-item-text compact">
+              <text class="watermark-label compact">水印文字</text>
+              <input class="watermark-input" placeholder="Hello" value="{{watermarkParams.text}}" bindinput="onWatermarkTextChange"></input>
+            </view>
+            <!-- 水印颜色 -->
+            <view class="watermark-item watermark-item-color compact">
+              <text class="watermark-label compact">水印颜色</text>
+              <view class="watermark-color-picker" bindtap="showColorPicker">
+                <view class="watermark-color" style="background-color: {{watermarkParams.color}}; border: 2rpx solid #ddd;"></view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 参数行1：文字大小和透明度 -->
+          <view class="watermark-params-row">
+            <!-- 文字大小 -->
+            <view class="watermark-item compact small">
+              <view class="watermark-header compact">
+                <text class="watermark-label compact">文字大小</text>
+                <view class="watermark-value-container compact">
+                  <text class="watermark-value compact">{{watermarkParams.size}}</text>
+                  <text class="watermark-reset compact" bindtap="resetWatermarkParam" data-param="size">↺</text>
+                </view>
+              </view>
+              <view class="slider-container compact">
+                <text class="slider-min compact">10</text>
+                <slider class="watermark-slider" min="10" max="100" value="{{watermarkParams.size}}" activeColor="#ff7f50" backgroundColor="#ccc" block-size="20" bindchange="onWatermarkParamChange" data-param="size"></slider>
+                <text class="slider-max compact">100</text>
+              </view>
+            </view>
+            
+            <!-- 水印透明度 -->
+            <view class="watermark-item compact small">
+              <view class="watermark-header compact">
+                <text class="watermark-label compact">透明度</text>
+                <view class="watermark-value-container compact">
+                  <text class="watermark-value compact">{{watermarkParams.opacity}}</text>
+                  <text class="watermark-reset compact" bindtap="resetWatermarkParam" data-param="opacity">↺</text>
+                </view>
+              </view>
+              <view class="slider-container compact">
+                <text class="slider-min compact">0</text>
+                <slider class="watermark-slider" min="0" max="1" step="0.01" value="{{watermarkParams.opacity}}" activeColor="#ff7f50" backgroundColor="#ccc" block-size="20" bindchange="onWatermarkParamChange" data-param="opacity"></slider>
+                <text class="slider-max compact">1</text>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 参数行2：水印角度和间距 -->
+          <view class="watermark-params-row">
+            <!-- 水印角度 -->
+            <view class="watermark-item compact small">
+              <view class="watermark-header compact">
+                <text class="watermark-label compact">角度</text>
+                <view class="watermark-value-container compact">
+                  <text class="watermark-value compact">{{watermarkParams.angle}}</text>
+                  <text class="watermark-reset compact" bindtap="resetWatermarkParam" data-param="angle">↺</text>
+                </view>
+              </view>
+              <view class="slider-container compact">
+                <text class="slider-min compact">0</text>
+                <slider class="watermark-slider" min="0" max="360" value="{{watermarkParams.angle}}" activeColor="#ff7f50" backgroundColor="#ccc" block-size="20" bindchange="onWatermarkParamChange" data-param="angle"></slider>
+                <text class="slider-max compact">360</text>
+              </view>
+            </view>
+            
+            <!-- 水印间距 -->
+            <view class="watermark-item compact small">
+              <view class="watermark-header compact">
+                <text class="watermark-label compact">间距</text>
+                <view class="watermark-value-container compact">
+                  <text class="watermark-value compact">{{watermarkParams.spacing}}</text>
+                  <text class="watermark-reset compact" bindtap="resetWatermarkParam" data-param="spacing">↺</text>
+                </view>
+              </view>
+              <view class="slider-container compact">
+                <text class="slider-min compact">10</text>
+                <slider class="watermark-slider" min="10" max="200" value="{{watermarkParams.spacing}}" activeColor="#ff7f50" backgroundColor="#ccc" block-size="20" bindchange="onWatermarkParamChange" data-param="spacing"></slider>
+                <text class="slider-max compact">200</text>
+              </view>
+            </view>
+          </view>
+        </view>
+        
+        <!-- 颜色选择器弹窗 -->
+        <view class="color-picker-modal" wx:if="{{showColorPicker}}">
+          <view class="color-picker-modal-overlay" bindtap="hideColorPicker"></view>
+          <view class="color-picker-modal-content advanced">
+            <view class="color-picker-title">水印颜色</view>
+            
+            <!-- 主颜色选择区域 -->
+            <view class="color-picker-main">
+              <view class="color-picker-gradient" bindtap="onColorPickerTap" bindtouchmove="onColorPickerMove">
+                <view class="color-picker-gradient-overlay"></view>
+                <view class="color-picker-selector" style="left: {{colorPickerPos.x}}px; top: {{colorPickerPos.y}}px;">
+                  <view class="color-picker-selector-inner"></view>
+                </view>
+              </view>
+              
+              <!-- 颜色滑块 -->
+              <view class="color-picker-slider-container">
+                <view class="color-picker-slider" bindtap="onColorSliderTap" bindtouchmove="onColorSliderMove">
+                  <view class="color-picker-slider-gradient"></view>
+                  <view class="color-picker-slider-selector" style="left: {{colorSliderPos}}px;">
+                    <view class="color-picker-slider-selector-inner"></view>
+                  </view>
+                </view>
+              </view>
+            </view>
+            
+            <!-- 颜色值和预览区域 -->
+            <view class="color-picker-value-section">
+              <!-- 颜色预览 -->
+              <view class="color-picker-preview">
+                <view class="color-picker-preview-color" style="background-color: {{watermarkParams.color}};"></view>
+              </view>
+              
+              <!-- 颜色值输入 -->
+              <view class="color-picker-input-section">
+                <input class="color-picker-input" value="{{currentColorValue}}" bindinput="onColorValueChange" placeholder="#ffffff"></input>
+                <view class="color-picker-format-tabs">
+                  <view class="color-picker-format-tab {{colorFormat === 'hex' ? 'active' : ''}}" bindtap="switchColorFormat" data-format="hex">Hex</view>
+                  <view class="color-picker-format-tab {{colorFormat === 'rgb' ? 'active' : ''}}" bindtap="switchColorFormat" data-format="rgb">RGB</view>
+                  <view class="color-picker-format-tab {{colorFormat === 'hsl' ? 'active' : ''}}" bindtap="switchColorFormat" data-format="hsl">HSL</view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 打印排版内容 -->
+      <view class="tab-content" wx:if="{{activeTab === 'print'}}">
+        <view class="print-section">
+          <!-- 相纸选择 -->
+          <view class="paper-select-section">
+            <text class="paper-select-title">相纸选择</text>
+            <view class="paper-options">
+              <label class="paper-option {{selectedPaper === 'six' ? 'active' : ''}}" bindtap="selectPaper" data-paper="six">
+                <radio checked="{{selectedPaper === 'six'}}" data-paper="six"></radio>
+                <text>六寸</text>
+              </label>
+              <label class="paper-option {{selectedPaper === 'five' ? 'active' : ''}}" bindtap="selectPaper" data-paper="five">
+                <radio checked="{{selectedPaper === 'five'}}" data-paper="five"></radio>
+                <text>五寸</text>
+              </label>
+              <label class="paper-option {{selectedPaper === 'a4' ? 'active' : ''}}" bindtap="selectPaper" data-paper="a4">
+                <radio checked="{{selectedPaper === 'a4'}}" data-paper="a4"></radio>
+                <text>A4</text>
+              </label>
+              <label class="paper-option {{selectedPaper === '3r' ? 'active' : ''}}" bindtap="selectPaper" data-paper="3r">
+                <radio checked="{{selectedPaper === '3r'}}" data-paper="3r"></radio>
+                <text>3R</text>
+              </label>
+              <label class="paper-option {{selectedPaper === '4r' ? 'active' : ''}}" bindtap="selectPaper" data-paper="4r">
+                <radio checked="{{selectedPaper === '4r'}}" data-paper="4r"></radio>
+                <text>4R</text>
+              </label>
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 高级参数内容 -->
+      <view class="tab-content" wx:if="{{activeTab === 'advanced'}}">
+        <view class="beauty-section">
+          <!-- 面部比例 -->
+          <view class="beauty-item">
+            <view class="beauty-header">
+              <text class="beauty-label">面部比例</text>
+              <view class="beauty-value-container">
+                <text class="beauty-value">{{advancedParams.faceRatio}}</text>
+                <text class="beauty-reset" bindtap="resetAdvancedParam" data-param="faceRatio">↺</text>
+              </view>
+            </view>
+            <view class="slider-container">
+              <text class="slider-min">0.1</text>
+              <slider class="beauty-slider" min="0.1" max="0.5" step="0.01" value="{{advancedParams.faceRatio}}" activeColor="#ff7f50" backgroundColor="#ccc" block-size="20" bindchange="onAdvancedParamChange" data-param="faceRatio"></slider>
+              <text class="slider-max">0.5</text>
+            </view>
+          </view>
+          
+          <!-- 头距顶距离 -->
+          <view class="beauty-item">
+            <view class="beauty-header">
+              <text class="beauty-label">头距顶距离</text>
+              <view class="beauty-value-container">
+                <text class="beauty-value">{{advancedParams.headTopDistance}}</text>
+                <text class="beauty-reset" bindtap="resetAdvancedParam" data-param="headTopDistance">↺</text>
+              </view>
+            </view>
+            <view class="slider-container">
+              <text class="slider-min">0.02</text>
+              <slider class="beauty-slider" min="0.02" max="0.5" step="0.01" value="{{advancedParams.headTopDistance}}" activeColor="#ff7f50" backgroundColor="#ccc" block-size="20" bindchange="onAdvancedParamChange" data-param="headTopDistance"></slider>
+              <text class="slider-max">0.5</text>
+            </view>
+          </view>
+          
+          <!-- 设置KB大小 -->
+          <view class="beauty-item">
+            <view class="beauty-header">
+              <text class="beauty-label">设置 KB大小</text>
+            </view>
+            <view class="radio-container">
+              <radio-group name="kbSize" bindchange="onKBSizeChange">
+                <label class="radio-option">
+                  <radio checked="{{advancedParams.kbSize === 'default'}}" value="default"></radio>
+                  <text>不设置</text>
+                </label>
+                <label class="radio-option">
+                  <radio checked="{{advancedParams.kbSize === 'custom'}}" value="custom"></radio>
+                  <text>自定义</text>
+                </label>
+              </radio-group>
+            </view>
+            
+            <!-- 自定义KB大小滑块，仅在选择自定义时显示 -->
+            <view wx:if="{{advancedParams.kbSize === 'custom'}}">
+              <view class="beauty-header">
+                <text class="beauty-label">KB大小</text>
+                <view class="beauty-value-container">
+                  <text class="beauty-value">{{advancedParams.customKB}}</text>
+                  <text class="beauty-reset" bindtap="resetAdvancedParam" data-param="customKB">↺</text>
+                </view>
+              </view>
+              <view class="slider-container">
+                <slider class="beauty-slider" min="10" max="200" value="{{advancedParams.customKB}}" activeColor="#ff7f50" backgroundColor="#ccc" block-size="20" bindchange="onAdvancedParamChange" data-param="customKB"></slider>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 证件照换底色模块 -->
+  <view wx:if="{{currentModule === 'changeBg'}}" class="module-content">
+    <view>
+      <view class="section">
+        <view class="upload-preview-container" bindtap="uploadBgImageFromAlbum">
+          <!-- 未上传图片时显示上传按钮 -->
+          <view wx:if="{{!bgImagePath}}" class="upload-buttons">
+            <text class="upload-note">请选择需要更换底色的证件照</text>
+          </view>
+          <!-- 上传图片后显示预览 -->
+          <image wx:if="{{bgImagePath}}" src="{{bgImagePath}}" mode="aspectFit" class="preview-image" catchtap="uploadBgImage"></image>
+        </view>
+      </view>
+    </view>
+    
+    <view class="setting-content">
+      <!-- 更多背景颜色选项 -->
+      <view class="change-bg-section">
+        <text class="change-bg-title">背景颜色</text>
+        <view class="color-list new-style">
+          <view class="color-option" wx:for="{{backgroundColorOptions}}" wx:key="key" bindtap="selectBgColor" data-color="{{item.key}}">
+            <view class="color-item" style="background: {{item.preview}}; border: 2px solid {{selectedBgColor === item.key ? '#ff6b6b' : 'transparent'}}; box-shadow: {{selectedBgColor === item.key ? '0 0 10px rgba(255, 107, 107, 0.5)' : 'none'}}" data-color="{{item.key}}"></view>
+            <text class="color-name">{{item.name}}</text>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 开始换底色按钮 -->
+      <view class="section">
+        <view class="btn-container-full">
+          <view class="btn {{bgImagePath ? '' : 'disabled'}}" bindtap="startChangeBg" data-disabled="{{!bgImagePath}}">
+            <text>开始换底色</text>
+          </view>
+        </view>
+      </view>
+      
+
+    </view>
+  </view>
+  
+  <!-- 证件照制作结果展示模块 -->
+  <view class="result-module" wx:if="{{showMakeResultModule && currentModule === 'make'}}">
+    <!-- 标准照和高清照 -->
+    <view class="result-row" style="display: block; margin-bottom: 20rpx; width: 100%; box-sizing: border-box; overflow: hidden;">
+      <view class="result-item" style="width: 48% !important; margin-right: 4% !important; margin-bottom: 16rpx !important; background-color: #3f3f46; border-radius: 12rpx; padding: 16rpx; box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.5); display: block !important; float: left !important; overflow: hidden; box-sizing: border-box !important; border: none !important; flex: none !important;">
+        <view class="result-item-header">
+          <text class="result-item-title">标准照</text>
+          <view class="result-image-actions">
+            <view class="result-image-btn fullscreen" bindtap="fullscreenImage" data-type="standard">
+              <image src="/images/icon/全屏.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+            <view class="result-image-btn download" bindtap="downloadImage" data-type="standard">
+              <image src="/images/icon/下载.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+          </view>
+        </view>
+        <view class="result-item-image-container" style="background: {{selectedColorPreviewStyle}};">
+          <image wx:if="{{makeTransparentImageHd || makeTransparentImage}}" src="{{makeTransparentImageHd || makeTransparentImage}}" mode="aspectFit" class="result-item-image"></image>
+        </view>
+      </view>
+      <view class="result-item" style="width: 48% !important; margin-bottom: 16rpx !important; background-color: #3f3f46; border-radius: 12rpx; padding: 16rpx; box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.5); display: block !important; float: left !important; overflow: hidden; box-sizing: border-box !important; border: none !important; flex: none !important;">
+        <view class="result-item-header">
+          <text class="result-item-title">高清照</text>
+          <view class="result-image-actions">
+            <view class="result-image-btn fullscreen" bindtap="fullscreenImage" data-type="hd">
+              <image src="/images/icon/全屏.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+            <view class="result-image-btn download" bindtap="downloadImage" data-type="hd">
+              <image src="/images/icon/下载.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+          </view>
+        </view>
+        <view class="result-item-image-container" style="background: {{selectedColorPreviewStyle}};">
+          <image wx:if="{{makeTransparentImageHd || makeTransparentImage}}" src="{{makeTransparentImageHd || makeTransparentImage}}" mode="aspectFit" class="result-item-image"></image>
+        </view>
+      </view>
+      <view style="clear: both;"></view>
+    </view>
+    
+    <!-- 排版照 - 已注释 -->
+    <view class="result-row" style="display: block; margin-bottom: 20rpx; width: 100%; box-sizing: border-box; overflow: hidden;">
+      <view class="result-item full-width" style="width: 100% !important; margin-bottom: 16rpx !important; background-color: #3f3f46; border-radius: 12rpx; padding: 16rpx; box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.5); display: block !important; float: none !important; overflow: hidden; box-sizing: border-box !important; border: none !important; flex: none !important;">
+        <view class="result-item-header">
+          <text class="result-item-title">排版照</text>
+          <view class="result-image-actions">
+            <view class="result-image-btn fullscreen" bindtap="fullscreenImage" data-type="layout">
+              <image src="/images/icon/全屏.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+            <view class="result-image-btn download" bindtap="downloadImage" data-type="layout">
+              <image src="/images/icon/下载.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+          </view>
+        </view>
+        <view class="result-item-image-container layout">
+          <!-- 排版照：5x2布局 -->
+          <image src="{{makeLayoutImage}}" mode="aspectFit" class="layout-item"></image>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 社交媒体模版照 - 已注释 -->
+    <!-- <view class="result-row" style="display: block; margin-bottom: 20rpx; width: 100%; box-sizing: border-box; overflow: hidden;">
+      <view class="result-item" style="width: 48% !important; margin-right: 4% !important; margin-bottom: 16rpx !important; background-color: #3f3f46; border-radius: 12rpx; padding: 16rpx; box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.5); display: block !important; float: left !important; overflow: hidden; box-sizing: border-box !important; border: none !important; flex: none !important;">
+        <view class="result-item-header">
+          <text class="result-item-title">社交媒体模版照1</text>
+          <view class="result-image-actions">
+            <view class="result-image-btn fullscreen" bindtap="fullscreenImage" data-type="social-1">
+              <image src="/images/icon/全屏.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+            <view class="result-image-btn download" bindtap="downloadImage" data-type="social-1">
+              <image src="/images/icon/下载.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+          </view>
+        </view>
+        <view class="result-item-image-container">
+          <image src="{{makeTemplateImage}}" mode="aspectFit" class="social-template-item"></image>
+        </view>
+      </view>
+      <view class="result-item" style="width: 48% !important; margin-bottom: 16rpx !important; background-color: #3f3f46; border-radius: 12rpx; padding: 16rpx; box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.5); display: block !important; float: left !important; overflow: hidden; box-sizing: border-box !important; border: none !important; flex: none !important;">
+        <view class="result-item-header">
+          <text class="result-item-title">社交媒体模版照2</text>
+          <view class="result-image-actions">
+            <view class="result-image-btn fullscreen" bindtap="fullscreenImage" data-type="social-2">
+              <image src="/images/icon/全屏.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+            <view class="result-image-btn download" bindtap="downloadImage" data-type="social-2">
+              <image src="/images/icon/下载.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+          </view>
+        </view>
+        <view class="result-item-image-container">
+          <image src="{{makeTemplateImage2}}" mode="aspectFit" class="social-template-item"></image>
+        </view>
+      </view>
+      <view style="clear: both;"></view>
+    </view> -->
+    
+    <!-- 抠图图像 -->
+    <view class="result-row" style="display: block; margin-bottom: 20rpx; width: 100%; box-sizing: border-box; overflow: hidden;">
+      <view class="result-item" style="width: 48% !important; margin-right: 4% !important; margin-bottom: 16rpx !important; background-color: #3f3f46; border-radius: 12rpx; padding: 16rpx; box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.5); display: block !important; float: left !important; overflow: hidden; box-sizing: border-box !important; border: none !important; flex: none !important;">
+        <view class="result-item-header">
+          <text class="result-item-title">透明高清照1</text>
+          <view class="result-image-actions">
+            <view class="result-image-btn fullscreen" bindtap="fullscreenImage" data-type="transparent-standard">
+              <image src="/images/icon/全屏.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+            <view class="result-image-btn download" bindtap="downloadImage" data-type="transparent-standard">
+              <image src="/images/icon/下载.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+          </view>
+        </view>
+        <view class="result-item-image-container">
+          <image wx:if="{{makeTransparentImage}}" src="{{makeTransparentImage}}" mode="aspectFit" class="result-item-image"></image>
+        </view>
+      </view>
+      <view class="result-item" style="width: 48% !important; margin-bottom: 16rpx !important; background-color: #3f3f46; border-radius: 12rpx; padding: 16rpx; box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.5); display: block !important; float: left !important; overflow: hidden; box-sizing: border-box !important; border: none !important; flex: none !important;">
+        <view class="result-item-header">
+          <text class="result-item-title">透明高清照2</text>
+          <view class="result-image-actions">
+            <view class="result-image-btn fullscreen" bindtap="fullscreenImage" data-type="transparent-hd">
+              <image src="/images/icon/全屏.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+            <view class="result-image-btn download" bindtap="downloadImage" data-type="transparent-hd">
+              <image src="/images/icon/下载.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+          </view>
+        </view>
+        <view class="result-item-image-container">
+          <image wx:if="{{makeTransparentImageHd}}" src="{{makeTransparentImageHd}}" mode="aspectFit" class="result-item-image"></image>
+        </view>
+      </view>
+      <view style="clear: both;"></view>
+    </view>
+    
+    <!-- 操作按钮 -->
+    <view class="result-actions">
+      <view class="result-action-btn reset" bindtap="resetMaking">重新制作</view>
+      <view class="result-action-btn save" bindtap="saveImage">保存到相册</view>
+    </view>
+  </view>
+  
+  <!-- 证件照换底色结果展示模块 -->
+  <view class="result-module" wx:if="{{showChangeBgResultModule && currentModule === 'changeBg'}}">
+    <!-- 只显示一张证件照 -->
+    <view class="result-row" style="display: block; margin-bottom: 20rpx; width: 100%; box-sizing: border-box; overflow: hidden;">
+      <view class="result-item" style="width: 100% !important; margin-bottom: 16rpx !important; background-color: #3f3f46; border-radius: 12rpx; padding: 16rpx; box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.5); display: block !important; float: left !important; overflow: hidden; box-sizing: border-box !important; border: none !important; flex: none !important;">
+        <view class="result-item-header">
+          <text class="result-item-title">证件照</text>
+          <view class="result-image-actions">
+            <view class="result-image-btn fullscreen" bindtap="fullscreenImage" data-type="standard">
+              <image src="/images/icon/全屏.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+            <view class="result-image-btn download" bindtap="downloadImage" data-type="standard">
+              <image src="/images/icon/下载.svg" mode="aspectFit" class="result-image-btn-icon"></image>
+            </view>
+          </view>
+        </view>
+        <view class="result-item-image-container">
+          <image src="{{changeBgResultImage}}" mode="aspectFit" class="result-item-image"></image>
+        </view>
+      </view>
+      <view style="clear: both;"></view>
+    </view>
+    
+    <!-- 操作按钮 -->
+    <view class="result-actions">
+      <view class="result-action-btn reset" bindtap="resetMaking">重新制作</view>
+      <view class="result-action-btn save" bindtap="saveImage">保存到相册</view>
+    </view>
+  </view>
+  
+
+  <!-- 用于绘制带有背景色证件照的临时canvas -->
+  <canvas canvas-id="tempCanvas" style="width: 500px; height: 600px; position: absolute; left: -9999px; top: -9999px;" width="500" height="600"></canvas>
+  <!-- 用于排版照生成的隐藏canvas -->
+  <canvas canvas-id="layoutCanvas" style="width: 3600px; height: 3600px; position: absolute; left: -9999px; top: -9999px;" width="3600" height="3600"></canvas>
+
+  <!-- 全屏预览弹窗 - 用于排版照横屏展示 -->
+  <view class="fullscreen-preview" wx:if="{{showFullscreenPreview}}" bindtap="closeFullscreenPreview">
+    <view class="fullscreen-preview-content {{fullscreenIsLandscape ? 'landscape' : ''}}" catchtap="preventClose">
+      <view class="fullscreen-preview-header">
+        <text class="fullscreen-preview-title">排版照预览</text>
+        <view class="fullscreen-preview-close" bindtap="closeFullscreenPreview">
+          <text>×</text>
+        </view>
+      </view>
+      <view class="fullscreen-preview-body">
+        <image 
+          src="{{fullscreenImagePath}}" 
+          mode="aspectFit" 
+          class="fullscreen-preview-image {{fullscreenIsLandscape ? 'landscape-image' : ''}}"
+          show-menu-by-longpress
+        ></image>
+      </view>
+      <view class="fullscreen-preview-footer">
+        <text class="fullscreen-preview-tip">点击任意位置关闭</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 自定义尺寸选择弹窗 -->
+  <view class="custom-modal" wx:if="{{showSizeModal}}">
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">{{modalTitle}}</text>
+        <view class="close-btn" bindtap="hideSizeModal">×</view>
+      </view>
+      <view class="modal-body">
+        <view class="modal-size-list">
+          <view wx:for="{{modalSizes}}" wx:key="id" class="modal-size-item" bindtap="selectModalSize" data-size="{{item.id}}">
+            <text>{{item.name}} ({{item.size}})</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

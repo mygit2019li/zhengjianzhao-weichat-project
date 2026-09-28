@@ -1,0 +1,525 @@
+<view class="container">
+  <!-- 顶部导航栏 -->
+  <view class="nav-bar">
+    <view class="nav-back" bindtap="goBack">
+      <text class="nav-back-icon">←</text>
+    </view>
+    <text class="nav-title">自由拼图</text>
+    <view class="nav-placeholder"></view>
+  </view>
+<view class="tip-txt">
+<text>点击编辑，拖动图片展示局部，长按拖动可交换位置</text>
+</view>
+  <view class="preview-area">
+    <view class="puzzle-canvas" style="width: {{canvasWidth}}rpx; height: {{canvasHeight}}rpx; background-color: {{renderModel.canvas.previewBackground || 'transparent'}};" bindtap="onCanvasBlankTap">
+      <!-- 图片布局区域 -->
+      <view class="image-layout" wx:if="{{images.length > 0}}">
+        <view class="draggable-image-container {{selectedIndex === index ? 'selected' : ''}} {{isImageSorting && dragFromIndex === index ? 'is-dragging' : ''}} {{isImageSorting && dragOverIndex === index ? 'is-drag-over' : ''}}"
+              wx:for="{{renderModel.images}}"
+              wx:key="index"
+              style="{{item.containerStyle}}"
+              bindtouchstart="onImageTouchStart"
+              bindtouchmove="onImageTouchMove"
+              bindtouchend="onImageTouchEnd"
+              bindlongpress="onImageLongPress"
+              bindtap="onImageTap"
+              data-index="{{index}}">
+          <image class="draggable-image"
+                 src="{{images[index]}}"
+                 mode="scaleToFill"
+                 style="{{item.style}}"/>
+        </view>
+
+        <view class="preview-border-line"
+              wx:if="{{renderModel.borders && renderModel.borders.length}}"
+              wx:for="{{renderModel.borders}}"
+              wx:key="index"
+              style="left: {{item.x}}rpx; top: {{item.y}}rpx; width: {{item.w}}rpx; height: {{item.h}}rpx; background-color: {{item.color}};"></view>
+      </view>
+
+      <!-- 文字叠加层 -->
+      <view class="text-overlay"
+            wx:for="{{texts}}"
+            wx:key="index"
+            wx:if="{{item.content}}"
+            catchtouchstart="onTextDragStart"
+            catchtouchmove="onTextDragMove"
+            catchtouchend="onTextDragEnd"
+            data-index="{{index}}"
+            style="left: {{item.x}}%; top: {{item.y}}%; color: {{item.color}}; font-size: {{item.size}}rpx; font-weight: {{item.bold ? '700' : '400'}}; text-shadow: {{item.shadow ? '0 2rpx 8rpx rgba(0,0,0,.45)' : 'none'}}; text-align: {{item.align}}; opacity: {{item.opacity / 100}};">
+        <view class="text-content-wrapper">
+          {{item.content}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作浮窗 - 移到 puzzle-canvas 外部以避免被裁剪 -->
+    <view class="operation-bar" wx:if="{{selectedIndex !== -1}}" style="{{operationBarStyle}}">
+      <view class="close-btn" catchtap="closeOperationBar">×</view>
+      <view class="ops-row">
+        <view class="op-btn" catchtap="replaceImage">
+          <text class="op-text">替换</text>
+        </view>
+        <view class="op-btn" catchtap="rotateImage">
+          <text class="op-text">旋转</text>
+        </view>
+        <view class="op-btn" catchtap="zoomInImage">
+          <text class="op-text">放大</text>
+        </view>
+        <view class="op-btn" catchtap="zoomOutImage">
+          <text class="op-text">缩小</text>
+        </view>
+        <view class="op-btn delete" catchtap="deleteImage">
+          <text class="op-text">删除</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="floating-add-btn" bindtap="chooseImages">
+      <image class="floating-add-icon-img" src="/images/icon/add-image.svg"></image>
+      <text class="floating-add-text">添加图片</text>
+    </view>
+  </view>
+
+  <view class="controls-area" bindtap="onControlsAreaTap">
+    <view class="ratio-section">
+      <scroll-view class="ratio-scroll" scroll-x enable-flex>
+        <view class="ratio-item {{canvasRatio === 'original' ? 'active' : ''}}" bindtap="setCanvasRatio" data-ratio="original">
+          <view class="ratio-box ratio-full">
+            <text class="ratio-text">完整</text>
+            <view class="corner tl"></view>
+            <view class="corner tr"></view>
+            <view class="corner bl"></view>
+            <view class="corner br"></view>
+          </view>
+        </view>
+        <view class="ratio-item {{canvasRatio === '1:1' ? 'active' : ''}}" bindtap="setCanvasRatio" data-ratio="1:1">
+          <view class="ratio-box" style="aspect-ratio: 1/1;">
+            <text class="ratio-text">1:1</text>
+          </view>
+        </view>
+        <view class="ratio-item {{canvasRatio === '3:4' ? 'active' : ''}}" bindtap="setCanvasRatio" data-ratio="3:4">
+          <view class="ratio-box" style="aspect-ratio: 3/4;">
+            <text class="ratio-text">3:4</text>
+          </view>
+        </view>
+        <view class="ratio-item {{canvasRatio === '4:3' ? 'active' : ''}}" bindtap="setCanvasRatio" data-ratio="4:3">
+          <view class="ratio-box" style="aspect-ratio: 4/3;">
+            <text class="ratio-text">4:3</text>
+          </view>
+        </view>
+        <view class="ratio-item {{canvasRatio === '9:16' ? 'active' : ''}}" bindtap="setCanvasRatio" data-ratio="9:16">
+          <view class="ratio-box" style="aspect-ratio: 9/16;">
+            <text class="ratio-text">9:16</text>
+          </view>
+        </view>
+        <view class="ratio-item {{canvasRatio === '16:9' ? 'active' : ''}}" bindtap="setCanvasRatio" data-ratio="16:9">
+          <view class="ratio-box" style="aspect-ratio: 16/9;">
+            <text class="ratio-text">16:9</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="feature-panel">
+      <!-- 布局面板 -->
+      <view class="panel template-section" wx:if="{{currentTab === 'layout'}}">
+        <view class="layout-tip" wx:if="{{images.length > 9}}">
+          <text>9 张以上图片将自动排列，无需选择布局</text>
+        </view>
+
+        <!-- 没有图片或1张图时显示单图布局 -->
+        <view class="layout-options" wx:if="{{images.length < 2}}">
+          <view class="layout-option active">
+            <view class="layout-preview single">
+              <view class="preview-cell full"></view>
+            </view>
+          </view>
+        </view>
+
+        <view class="layout-options" wx:if="{{images.length === 2}}">
+          <view class="layout-option {{layoutMode === 'vertical' ? 'active' : ''}}" bindtap="setLayoutMode" data-mode="vertical">
+            <view class="layout-preview vertical">
+              <view class="preview-cell"></view>
+              <view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{layoutMode === 'horizontal' ? 'active' : ''}}" bindtap="setLayoutMode" data-mode="horizontal">
+            <view class="layout-preview horizontal">
+              <view class="preview-cell"></view>
+              <view class="preview-cell"></view>
+            </view>
+          </view>
+        </view>
+        
+        <view class="layout-options" wx:if="{{images.length === 3}}">
+          <view class="layout-option {{tripleLayoutMode === 'vertical' ? 'active' : ''}}" bindtap="setTripleLayoutMode" data-mode="vertical">
+            <view class="layout-preview vertical">
+              <view class="preview-cell"></view>
+              <view class="preview-cell"></view>
+              <view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{tripleLayoutMode === 'horizontal' ? 'active' : ''}}" bindtap="setTripleLayoutMode" data-mode="horizontal">
+            <view class="layout-preview horizontal">
+              <view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{tripleLayoutMode === 'top-large' ? 'active' : ''}}" bindtap="setTripleLayoutMode" data-mode="top-large">
+            <view class="layout-preview triple-top">
+              <view class="preview-cell large"></view>
+              <view class="preview-row">
+                <view class="preview-cell small"></view>
+                <view class="preview-cell small"></view>
+              </view>
+            </view>
+          </view>
+          <view class="layout-option {{tripleLayoutMode === 'bottom-large' ? 'active' : ''}}" bindtap="setTripleLayoutMode" data-mode="bottom-large">
+            <view class="layout-preview triple-bottom">
+              <view class="preview-row">
+                <view class="preview-cell small"></view>
+                <view class="preview-cell small"></view>
+              </view>
+              <view class="preview-cell large"></view>
+            </view>
+          </view>
+          <view class="layout-option {{tripleLayoutMode === 'left-large' ? 'active' : ''}}" bindtap="setTripleLayoutMode" data-mode="left-large">
+            <view class="layout-preview triple-left">
+              <view class="preview-cell large"></view>
+              <view class="preview-col">
+                <view class="preview-cell small"></view>
+                <view class="preview-cell small"></view>
+              </view>
+            </view>
+          </view>
+          <view class="layout-option {{tripleLayoutMode === 'right-large' ? 'active' : ''}}" bindtap="setTripleLayoutMode" data-mode="right-large">
+            <view class="layout-preview triple-right">
+              <view class="preview-col">
+                <view class="preview-cell small"></view>
+                <view class="preview-cell small"></view>
+              </view>
+              <view class="preview-cell large"></view>
+            </view>
+          </view>
+        </view>
+
+    
+        <view class="layout-options" wx:if="{{images.length === 4}}">
+          <view class="layout-option {{fourLayoutMode === 'vertical' ? 'active' : ''}}" bindtap="setFourLayoutMode" data-mode="vertical">
+            <view class="layout-preview vertical">
+              <view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{fourLayoutMode === 'horizontal' ? 'active' : ''}}" bindtap="setFourLayoutMode" data-mode="horizontal">
+            <view class="layout-preview horizontal">
+              <view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{fourLayoutMode === 'grid' ? 'active' : ''}}" bindtap="setFourLayoutMode" data-mode="grid">
+            <view class="layout-preview grid-2x2">
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view></view>
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view></view>
+            </view>
+          </view>
+          <view class="layout-option {{fourLayoutMode === 'top-large' ? 'active' : ''}}" bindtap="setFourLayoutMode" data-mode="top-large">
+            <view class="layout-preview four-top">
+              <view class="preview-cell large"></view>
+              <view class="preview-row"><view class="preview-cell small"></view><view class="preview-cell small"></view><view class="preview-cell small"></view></view>
+            </view>
+          </view>
+        </view>
+
+       
+        <view class="layout-options" wx:if="{{images.length === 5}}">
+          <view class="layout-option {{fiveLayoutMode === 'vertical' ? 'active' : ''}}" bindtap="setFiveLayoutMode" data-mode="vertical">
+            <view class="layout-preview vertical">
+              <view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{fiveLayoutMode === 'horizontal' ? 'active' : ''}}" bindtap="setFiveLayoutMode" data-mode="horizontal">
+            <view class="layout-preview horizontal">
+              <view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{fiveLayoutMode === 'grid' ? 'active' : ''}}" bindtap="setFiveLayoutMode" data-mode="grid">
+            <view class="layout-preview grid-2-3">
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view></view>
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view></view>
+            </view>
+          </view>
+          <view class="layout-option {{fiveLayoutMode === 'left-two' ? 'active' : ''}}" bindtap="setFiveLayoutMode" data-mode="left-two">
+            <view class="layout-preview left-2-3">
+              <view class="preview-col"><view class="preview-cell"></view><view class="preview-cell"></view></view>
+              <view class="preview-col"><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view></view>
+            </view>
+          </view>
+        </view>
+
+        
+        <view class="layout-options" wx:if="{{images.length === 6}}">
+          <view class="layout-option {{sixLayoutMode === 'vertical' ? 'active' : ''}}" bindtap="setSixLayoutMode" data-mode="vertical">
+            <view class="layout-preview vertical">
+              <view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view>
+              <view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{sixLayoutMode === 'horizontal' ? 'active' : ''}}" bindtap="setSixLayoutMode" data-mode="horizontal">
+            <view class="layout-preview horizontal">
+              <view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view>
+              <view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{sixLayoutMode === 'grid' ? 'active' : ''}}" bindtap="setSixLayoutMode" data-mode="grid">
+            <view class="layout-preview grid-2x3">
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view></view>
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view></view>
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view></view>
+            </view>
+          </view>
+        </view>
+
+     
+        <view class="layout-options" wx:if="{{images.length === 7}}">
+          <view class="layout-option {{sevenLayoutMode === 'vertical' ? 'active' : ''}}" bindtap="setSevenLayoutMode" data-mode="vertical">
+            <view class="layout-preview vertical">
+              <view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{sevenLayoutMode === 'horizontal' ? 'active' : ''}}" bindtap="setSevenLayoutMode" data-mode="horizontal">
+            <view class="layout-preview horizontal">
+              <view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{sevenLayoutMode === 'grid-3-4' ? 'active' : ''}}" bindtap="setSevenLayoutMode" data-mode="grid-3-4">
+            <view class="layout-preview grid-3-4">
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view></view>
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view></view>
+            </view>
+          </view>
+          <view class="layout-option {{sevenLayoutMode === 'grid-4-3' ? 'active' : ''}}" bindtap="setSevenLayoutMode" data-mode="grid-4-3">
+            <view class="layout-preview grid-4-3">
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view></view>
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view></view>
+            </view>
+          </view>
+          <view class="layout-option {{sevenLayoutMode === 'top-one' ? 'active' : ''}}" bindtap="setSevenLayoutMode" data-mode="top-one">
+            <view class="layout-preview top-one-7">
+              <view class="preview-cell large"></view>
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view></view>
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view></view>
+            </view>
+          </view>
+        </view>
+
+       
+        <view class="layout-options" wx:if="{{images.length === 8}}">
+          <view class="layout-option {{eightLayoutMode === 'vertical' ? 'active' : ''}}" bindtap="setEightLayoutMode" data-mode="vertical">
+            <view class="layout-preview vertical">
+              <view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{eightLayoutMode === 'horizontal' ? 'active' : ''}}" bindtap="setEightLayoutMode" data-mode="horizontal">
+            <view class="layout-preview horizontal">
+              <view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{eightLayoutMode === 'grid-3-3-2' ? 'active' : ''}}" bindtap="setEightLayoutMode" data-mode="grid-3-3-2">
+            <view class="layout-preview grid-3-3-2">
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view></view>
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view></view>
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view></view>
+            </view>
+          </view>
+          <view class="layout-option {{eightLayoutMode === 'grid-4-4' ? 'active' : ''}}" bindtap="setEightLayoutMode" data-mode="grid-4-4">
+            <view class="layout-preview grid-4-4">
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view></view>
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view></view>
+            </view>
+          </view>
+        </view>
+
+
+        <view class="layout-options" wx:if="{{images.length === 9}}">
+          <view class="layout-option {{nineLayoutMode === 'vertical' ? 'active' : ''}}" bindtap="setNineLayoutMode" data-mode="vertical">
+            <view class="layout-preview vertical">
+              <view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{nineLayoutMode === 'horizontal' ? 'active' : ''}}" bindtap="setNineLayoutMode" data-mode="horizontal">
+            <view class="layout-preview horizontal">
+              <view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{nineLayoutMode === 'grid' ? 'active' : ''}}" bindtap="setNineLayoutMode" data-mode="grid">
+            <view class="layout-preview grid-3x3">
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view></view>
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view></view>
+              <view class="preview-row"><view class="preview-cell"></view><view class="preview-cell"></view><view class="preview-cell"></view></view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 超过9张图：只有上下或左右拼接 -->
+        <view class="layout-options" wx:if="{{images.length > 9}}">
+          <view class="layout-option {{layoutMode === 'vertical' ? 'active' : ''}}" bindtap="setLayoutMode" data-mode="vertical">
+            <view class="layout-preview vertical">
+              <view class="preview-cell"></view>
+              <view class="preview-cell"></view>
+              <view class="preview-cell"></view>
+            </view>
+          </view>
+          <view class="layout-option {{layoutMode === 'horizontal' ? 'active' : ''}}" bindtap="setLayoutMode" data-mode="horizontal">
+            <view class="layout-preview horizontal">
+              <view class="preview-cell"></view>
+              <view class="preview-cell"></view>
+              <view class="preview-cell"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 边框面板 -->
+      <view class="panel border-section" wx:if="{{currentTab === 'border'}}">
+        <view class="panel-title">边框设置</view>
+        <view class="border-row">
+          <!-- 边框宽度 -->
+          <view class="border-width-compact">
+            <view class="width-btn {{borderWidth === 0 ? 'active' : ''}}" bindtap="setBorderWidth" data-width="0">
+              <text>无</text>
+            </view>
+            <view class="width-btn {{borderWidth === 4 ? 'active' : ''}}" bindtap="setBorderWidth" data-width="4">
+              <view class="width-line thin"></view>
+            </view>
+            <view class="width-btn {{borderWidth === 8 ? 'active' : ''}}" bindtap="setBorderWidth" data-width="8">
+              <view class="width-line medium"></view>
+            </view>
+            <view class="width-btn {{borderWidth === 16 ? 'active' : ''}}" bindtap="setBorderWidth" data-width="16">
+              <view class="width-line thick"></view>
+            </view>
+          </view>
+          
+          <!-- 边框颜色 -->
+          <view class="border-color-compact">
+            <view class="color-dot-small {{borderColor === '#ffffff' ? 'active' : ''}}" bindtap="setBorderColor" data-color="#ffffff" style="background-color: #ffffff;"></view>
+            <view class="color-dot-small {{borderColor === '#000000' ? 'active' : ''}}" bindtap="setBorderColor" data-color="#000000" style="background-color: #000000;"></view>
+            <view class="color-dot-small {{borderColor === '#f5f5f5' ? 'active' : ''}}" bindtap="setBorderColor" data-color="#f5f5f5" style="background-color: #f5f5f5;"></view>
+            <view class="color-dot-small {{borderColor === '#06B6D4' ? 'active' : ''}}" bindtap="setBorderColor" data-color="#06B6D4" style="background-color: #06B6D4;"></view>
+            <view class="color-dot-small {{borderColor === '#FF6B6B' ? 'active' : ''}}" bindtap="setBorderColor" data-color="#FF6B6B" style="background-color: #FF6B6B;"></view>
+            <view class="color-dot-small {{borderColor === '#4ECDC4' ? 'active' : ''}}" bindtap="setBorderColor" data-color="#4ECDC4" style="background-color: #4ECDC4;"></view>
+          </view>
+        </view>
+
+        <view class="panel-title" style="margin-top: 24rpx;">边框圆角</view>
+        <view class="border-radius-slider">
+          <slider min="0" max="60" value="{{borderRadius}}" activeColor="#06B6D4" backgroundColor="#e0e0e0" block-size="20" bindchanging="setBorderRadius" bindchange="setBorderRadius"/>
+        </view>
+      </view>
+
+      <!-- 文字面板 -->
+      <view class="panel text-section" wx:if="{{currentTab === 'text'}}">
+        <view class="text-input-wrap" style="display: flex; align-items: center; gap: 16rpx;">
+          <textarea class="text-input" style="flex: 1;" maxlength="60" placeholder="输入文字，支持换行" value="{{texts[activeTextIndex].content}}" bindinput="onTextInput" />
+          <view class="add-text-btn" bindtap="addNewText">
+            <image src="/images/icon/加字.svg" mode="aspectFit" style="width: 48rpx; height: 48rpx;"></image>
+          </view>
+        </view>
+
+        <view class="compact-row">
+          <view class="control-group">
+            <text class="control-label">字号</text>
+            <view class="stepper">
+              <view class="stepper-btn" bindtap="changeTextSize" data-delta="-2">-</view>
+              <text class="stepper-value">{{texts[activeTextIndex].size}}</text>
+              <view class="stepper-btn" bindtap="changeTextSize" data-delta="2">+</view>
+            </view>
+          </view>
+          <view class="control-group">
+            <text class="control-label">透明度</text>
+            <view class="stepper">
+              <view class="stepper-btn" bindtap="changeTextOpacity" data-delta="-10">-</view>
+              <text class="stepper-value">{{texts[activeTextIndex].opacity}}%</text>
+              <view class="stepper-btn" bindtap="changeTextOpacity" data-delta="10">+</view>
+            </view>
+          </view>
+        </view>
+
+        <view class="compact-row" style="margin-top: 24rpx;">
+          <view class="style-group">
+            <view class="mini-btn {{texts[activeTextIndex].bold ? 'mini-btn-active' : ''}}" bindtap="toggleTextBold">加粗</view>
+            <view class="mini-btn {{texts[activeTextIndex].shadow ? 'mini-btn-active' : ''}}" bindtap="toggleTextShadow">阴影</view>
+          </view>
+          <view class="color-row-compact">
+            <view class="color-dot {{texts[activeTextIndex].color === item ? 'color-dot-active' : ''}}" wx:for="{{textColors}}" wx:key="*this" style="background: {{item}};" bindtap="selectTextColor" data-color="{{item}}"></view>
+          </view>
+        </view>
+      </view>
+
+      <view class="edit-section feature-view" wx:if="{{currentTab === 'edit'}}">
+        <view class="edit-tools-row">
+          <view class="edit-tool-item" bindtap="rotateAll">
+            <view class="tool-icon-circle">
+              <image class="tool-icon" src="/images/icon/全部旋转.svg" mode="aspectFit"></image>
+            </view>
+            <text class="tool-name">全部旋转</text>
+          </view>
+          <view class="edit-tool-item" bindtap="resetAll">
+            <view class="tool-icon-circle">
+              <image class="tool-icon" src="/images/icon/全部重置.svg" mode="aspectFit"></image>
+            </view>
+            <text class="tool-name">全部重置</text>
+          </view>
+          <view class="edit-tool-item" bindtap="randomLayout">
+            <view class="tool-icon-circle">
+              <image class="tool-icon" src="/images/icon/随机分布.svg" mode="aspectFit"></image>
+            </view>
+            <text class="tool-name">随机分布</text>
+          </view>
+          <view class="edit-tool-item" bindtap="shuffleImages">
+            <view class="tool-icon-circle">
+              <image class="tool-icon" src="/images/icon/随机图片.svg" mode="aspectFit"></image>
+            </view>
+            <text class="tool-name">随机图片</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="bottom-toolbar">
+      <view class="tabs">
+        <view class="tab-item {{currentTab === 'layout' ? 'active' : ''}}" bindtap="switchTab" data-tab="layout">
+          <image class="tab-icon" src="/images/icon/布局.svg" mode="aspectFit"></image>
+          <text>布局</text>
+        </view>
+        <view class="tab-item {{currentTab === 'border' ? 'active' : ''}}" bindtap="switchTab" data-tab="border">
+          <image class="tab-icon" src="/images/icon/边框.svg" mode="aspectFit"></image>
+          <text>边框</text>
+        </view>
+        <view class="tab-item {{currentTab === 'text' ? 'active' : ''}}" bindtap="switchTab" data-tab="text">
+          <image class="tab-icon" src="/images/icon/加字.svg" mode="aspectFit"></image>
+          <text>加字</text>
+        </view>
+        <view class="tab-item {{currentTab === 'edit' ? 'active' : ''}}" bindtap="switchTab" data-tab="edit">
+          <image class="tab-icon" src="/images/icon/编辑.svg" mode="aspectFit"></image>
+          <text>编辑</text>
+        </view>
+      </view>
+      <view class="save-btn" bindtap="saveWork">保存作品</view>
+    </view>
+  </view>
+
+  <canvas canvas-id="puzzleCanvas" style="position: absolute; left: -9999px; top: -9999px; width: {{canvasWidth}}px; height: {{canvasHeight}}px;"></canvas>
+
+  <!-- 缩放滑块弹窗 -->
+  <view class="scale-popup {{showScalePopup ? 'show' : ''}}" wx:if="{{showScalePopup}}">
+    <view class="popup-mask" bindtap="closeScalePopup"></view>
+    <view class="popup-content">
+      <view class="popup-title">缩放图片</view>
+      <view class="scale-slider-wrap">
+        <text class="scale-min">0.5x</text>
+        <slider class="scale-slider" min="0.5" max="3" step="0.1" value="{{popupImageScale}}" bindchange="onPopupScaleChange" show-value/>
+        <text class="scale-max">3x</text>
+      </view>
+      <view class="popup-close" bindtap="closeScalePopup">完成</view>
+    </view>
+  </view>
+</view>

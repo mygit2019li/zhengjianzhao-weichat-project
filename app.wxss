@@ -1,0 +1,75 @@
+/* 全局样式 - 统一配色规范 */
+page {
+  background-color: #f6f6f6;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.container {
+  padding: 5rpx;
+  box-sizing: border-box;
+}
+
+/* 卡片样式 - 统一 */
+.card {
+  background-color: #fff;
+  border-radius: 20rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+/* 主按钮样式 - 统一青色 */
+.btn {
+  background-color: #06B6D4;
+  color: #fff;
+  padding: 20rpx;
+  border-radius: 40rpx;
+  text-align: center;
+  font-size: 32rpx;
+  margin: 20rpx 0;
+  box-shadow: 0 8rpx 20rpx rgba(6, 182, 212, 0.2);
+}
+
+.btn:active {
+  opacity: 0.9;
+  transform: translateY(2rpx);
+}
+
+/* 次按钮样式 */
+.btn-secondary {
+  background-color: #fff;
+  color: #333;
+  border: 2rpx solid #e8e8e8;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+/* 标题样式 - 统一 */
+.title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #1f2e3d;
+  margin: 20rpx 0;
+  text-align: center;
+}
+
+/* 文字颜色规范 */
+.text-primary { color: #1f2e3d; }
+.text-secondary { color: #666; }
+.text-tertiary { color: #999; }
+.text-link { color: #576b95; }
+
+/* 背景色规范 */
+.bg-page { background-color: #f6f6f6; }
+.bg-card { background-color: #fff; }
+.bg-primary { background-color: #06B6D4; }
+
+/* 主色渐变 */
+.gradient-primary {
+  background: linear-gradient(135deg, #cffafe 0%, #ecfeff 100%);
+}
+
+/* 功能色 */
+.color-success { color: #07C160; }
+.color-warning { color: #ff4d4f; }
+.bg-success { background-color: #07C160; }
+.bg-warning { background-color: #ff4d4f; }

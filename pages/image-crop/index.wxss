@@ -1,0 +1,388 @@
+/* pages/image-crop/index.wxss */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #000;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 引导页样式 */
+.guide-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx;
+  box-sizing: border-box;
+}
+
+.guide-header {
+  margin-top: 60rpx;
+  text-align: center;
+  margin-bottom: 40rpx;
+}
+
+.guide-title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.guide-subtitle {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.guide-content {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.guide-hero-section {
+  width: 100%;
+  position: relative;
+}
+
+.crop-demo-container {
+  width: 100%;
+  height: 400rpx;
+  background-color: #f0f0f0;
+  border-radius: 20rpx;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.crop-demo-frame {
+  width: 80%;
+  height: 80%;
+  position: relative;
+}
+
+.crop-demo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.crop-frame-overlay {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 80%;
+  height: 80%;
+  border: 2rpx solid #fff;
+  box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.5);
+}
+
+.crop-corner {
+  position: absolute;
+  width: 30rpx;
+  height: 30rpx;
+  border-color: #fff;
+  border-style: solid;
+}
+
+.crop-corner.tl { top: -4rpx; left: -4rpx; border-width: 4rpx 0 0 4rpx; }
+.crop-corner.tr { top: -4rpx; right: -4rpx; border-width: 4rpx 4rpx 0 0; }
+.crop-corner.bl { bottom: -4rpx; left: -4rpx; border-width: 0 0 4rpx 4rpx; }
+.crop-corner.br { bottom: -4rpx; right: -4rpx; border-width: 0 4rpx 4rpx 0; }
+
+.hero-text-overlay {
+  margin-top: 40rpx;
+}
+
+.feature-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30rpx;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  background-color: #f9f9f9;
+  padding: 20rpx;
+  border-radius: 12rpx;
+}
+
+.feature-icon {
+  font-size: 40rpx;
+  margin-right: 20rpx;
+}
+
+.feature-text {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.guide-footer {
+  width: 100%;
+  padding-bottom: 40rpx;
+}
+
+.start-btn {
+  width: 100%;
+  height: 90rpx;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #fff;
+  font-size: 34rpx;
+  font-weight: bold;
+  border-radius: 45rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 8rpx 20rpx rgba(245, 158, 11, 0.3);
+}
+
+.start-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* 裁剪区域 */
+.crop-area {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.placeholder-icon {
+  width: 120rpx;
+  height: 120rpx;
+  margin-bottom: 20rpx;
+  opacity: 0.5;
+}
+
+.placeholder-text {
+  color: #999;
+  font-size: 32rpx;
+}
+
+.image-wrapper {
+  position: absolute;
+  overflow: hidden; /* Important: Clip image to viewport */
+  z-index: 10;
+}
+
+.target-image {
+  /* transform is handled inline */
+  will-change: transform;
+}
+
+.crop-frame {
+  position: absolute;
+  border: 2rpx solid rgba(255, 255, 255, 0.95);
+  box-sizing: border-box;
+  z-index: 20;
+  box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.75);
+}
+
+/* Grid lines inside crop frame */
+.crop-frame::before {
+  content: '';
+  position: absolute;
+  top: 33.33%;
+  left: 0;
+  width: 100%;
+  height: 33.33%;
+  border-top: 1rpx dashed rgba(255, 255, 255, 0.3);
+  border-bottom: 1rpx dashed rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+
+.crop-frame::after {
+  content: '';
+  position: absolute;
+  left: 33.33%;
+  top: 0;
+  height: 100%;
+  width: 33.33%;
+  border-left: 1rpx dashed rgba(255, 255, 255, 0.3);
+  border-right: 1rpx dashed rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+
+.corner {
+  position: absolute;
+  width: 48rpx;
+  height: 48rpx;
+  border-style: solid;
+  border-color: #f59e0b;
+  z-index: 21;
+}
+
+.top-left { top: -3rpx; left: -3rpx; border-width: 6rpx 0 0 6rpx; }
+.top-right { top: -3rpx; right: -3rpx; border-width: 6rpx 6rpx 0 0; }
+.bottom-left { bottom: -3rpx; left: -3rpx; border-width: 0 0 6rpx 6rpx; }
+.bottom-right { bottom: -3rpx; right: -3rpx; border-width: 0 6rpx 6rpx 0; }
+
+/* 遮罩层 (Fallback if shadow doesn't work well or needed separately) */
+.mask {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  z-index: 15;
+  display: none; /* Using box-shadow on crop-frame instead */
+}
+
+/* 控制区域 */
+.controls-area {
+  background-color: #1a1a1a;
+  padding: 24rpx 30rpx;
+  display: flex;
+  flex-direction: column;
+  z-index: 30;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  border-top: 1rpx solid rgba(255, 255, 255, 0.08);
+}
+
+.control-row {
+  display: flex;
+  justify-content: center;
+  gap: 80rpx;
+  margin-bottom: 24rpx;
+}
+
+.icon-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12rpx 24rpx;
+  border-radius: 12rpx;
+  transition: background-color 0.2s;
+}
+
+.icon-btn:active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.control-icon {
+  width: 44rpx;
+  height: 44rpx;
+  margin-bottom: 10rpx;
+  filter: invert(1);
+  opacity: 0.9;
+}
+
+.icon-btn text {
+  color: #aaa;
+  font-size: 22rpx;
+}
+
+.ratio-scroll {
+  white-space: nowrap;
+  margin-bottom: 28rpx;
+  height: 90rpx;
+}
+
+.ratio-options {
+  display: flex;
+  padding: 0 10rpx;
+  justify-content: center;
+}
+
+.ratio-item {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 32rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  opacity: 0.5;
+  transition: all 0.2s;
+}
+
+.ratio-item:last-child {
+  margin-right: 0;
+}
+
+.ratio-item.active {
+  opacity: 1;
+  background-color: rgba(245, 158, 11, 0.15);
+}
+
+.ratio-item.active .ratio-box {
+  border-color: #f59e0b;
+}
+
+.ratio-item.active text {
+  color: #f59e0b;
+}
+
+.ratio-box {
+  border: 2rpx solid rgba(255, 255, 255, 0.6);
+  margin-bottom: 8rpx;
+  border-radius: 4rpx;
+  transition: border-color 0.2s;
+}
+
+.ratio-box.free { width: 36rpx; height: 36rpx; border-style: dashed; }
+.ratio-box.square { width: 36rpx; height: 36rpx; }
+.ratio-box.p3-4 { width: 27rpx; height: 36rpx; }
+.ratio-box.p4-3 { width: 36rpx; height: 27rpx; }
+.ratio-box.p9-16 { width: 20rpx; height: 36rpx; }
+.ratio-box.p16-9 { width: 36rpx; height: 20rpx; }
+
+.ratio-item text {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 22rpx;
+}
+
+.btn-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.btn-group button {
+  flex: 1;
+  font-size: 28rpx;
+  height: 76rpx;
+  line-height: normal;
+  margin: 0;
+  border-radius: 38rpx;
+  font-weight: 500;
+  transition: all 0.2s;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.btn-group button:active {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #fff;
+  box-shadow: 0 4rpx 16rpx rgba(245, 158, 11, 0.35);
+}

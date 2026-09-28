@@ -1,0 +1,45 @@
+<view class="container">
+  <view class="header">
+    <text class="title">格式转换</text>
+    <text class="subtitle">支持 JPG / PNG 互转</text>
+  </view>
+
+  <!-- 图片预览 -->
+  <view class="preview-area" bindtap="chooseImage">
+    <block wx:if="{{imagePath}}">
+      <image src="{{imagePath}}" mode="aspectFit" class="preview-img"></image>
+      <view class="file-info">当前格式: {{currentFormat}} · 已选{{imagePaths.length || 1}}张</view>
+    </block>
+    <block wx:else>
+      <view class="placeholder">
+        <image src="/images/icon/add-image.svg" class="add-icon"></image>
+        <text>点击选择图片</text>
+      </view>
+    </block>
+  </view>
+
+  <!-- 控制区域 -->
+  <view class="controls-area" wx:if="{{imagePath}}">
+    <view class="format-selector">
+      <text class="section-title">目标格式</text>
+      <radio-group class="radio-group" bindchange="onFormatChange">
+        <label class="radio-label {{targetFormat === 'jpg' ? 'active' : ''}}">
+          <radio value="jpg" checked="{{targetFormat === 'jpg'}}" hidden/>
+          <text>JPG</text>
+        </label>
+        <label class="radio-label {{targetFormat === 'png' ? 'active' : ''}}">
+          <radio value="png" checked="{{targetFormat === 'png'}}" hidden/>
+          <text>PNG</text>
+        </label>
+      </radio-group>
+    </view>
+
+    <view class="btn-group">
+      <button class="btn-secondary" bindtap="chooseImage">重选（最多20张）</button>
+      <button class="btn-primary" bindtap="convertAndSave">批量转换并保存</button>
+    </view>
+  </view>
+
+  <!-- 隐藏 Canvas 用于转换 -->
+  <canvas type="2d" id="convertCanvas" class="offscreen-canvas"></canvas>
+</view>

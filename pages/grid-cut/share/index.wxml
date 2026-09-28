@@ -1,0 +1,17 @@
+<view class="container">
+  <view class="header">
+    <view class="title">{{title}}</view>
+    <view class="desc">以下是切好的宫格图，点击可预览原图</view>
+  </view>
+
+  <view class="grid" style="grid-template-columns: repeat({{cols}}, 1fr);">
+    <view class="grid-item" wx:for="{{images}}" wx:key="index">
+      <image class="grid-image" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-src="{{item}}"></image>
+      <view class="index-badge">{{index + 1}}</view>
+    </view>
+  </view>
+
+  <view class="share-area">
+    <button class="share-btn" open-type="share">分享给好友</button>
+  </view>
+</view>

@@ -1,0 +1,184 @@
+/* pages/pdf2img/index.wxss */
+.container {
+  min-height: 100vh;
+  background-color: #f8f8f8;
+  padding: 30rpx 30rpx calc(40rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.header {
+  margin-bottom: 36rpx;
+  text-align: center;
+}
+
+.title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.subtitle {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* PDF 选择区 */
+.picker-area {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 40rpx 30rpx;
+  margin-bottom: 30rpx;
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx dashed #d0d0d0;
+  border-radius: 16rpx;
+  padding: 50rpx 20rpx;
+}
+
+.add-icon {
+  width: 70rpx;
+  height: 70rpx;
+  margin-bottom: 16rpx;
+}
+
+.placeholder text {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.placeholder-tip {
+  font-size: 22rpx;
+  color: #bbb;
+  margin-top: 10rpx;
+}
+
+/* PDF 文件卡片 */
+.pdf-card {
+  display: flex;
+  align-items: center;
+}
+
+.pdf-badge {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: bold;
+  padding: 20rpx 24rpx;
+  border-radius: 12rpx;
+  flex-shrink: 0;
+}
+
+.pdf-meta {
+  margin-left: 24rpx;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pdf-name {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pdf-size {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 6rpx;
+}
+
+.pdf-change {
+  font-size: 26rpx;
+  color: #06B6D4;
+  flex-shrink: 0;
+}
+
+/* 按钮 */
+.btn-group {
+  margin-bottom: 30rpx;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #06B6D4 0%, #0891b2 100%);
+  color: #fff;
+  border-radius: 44rpx;
+  font-size: 32rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  width: 100%;
+  border: none;
+}
+
+.btn-primary[disabled] {
+  background: #ccc;
+  color: #fff;
+}
+
+/* 转换结果 */
+.pages-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.pages-count {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.pages-save {
+  font-size: 26rpx;
+  color: #06B6D4;
+  font-weight: bold;
+}
+
+.pages-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+}
+
+.page-item {
+  position: relative;
+  border-radius: 12rpx;
+  overflow: hidden;
+  background-color: #fff;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+.page-item::before {
+  content: "";
+  display: block;
+  padding-top: 130%;
+}
+
+.page-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.page-no {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-top-right-radius: 10rpx;
+}

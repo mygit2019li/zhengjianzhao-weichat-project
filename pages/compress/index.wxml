@@ -1,0 +1,150 @@
+<view class="container">
+  <view class="header">
+    <text class="subtitle">支持最多20张图片批量压缩</text>
+  </view>
+
+  <scroll-view scroll-y class="image-list-scroll">
+    <view class="image-grid">
+      <!-- Add Button -->
+      <view class="grid-item add-btn" bindtap="chooseImage" wx:if="{{imageList.length < 20}}">
+        <image src="/images/icon/add-image.svg" class="add-icon"></image>
+        <text>添加图片</text>
+        <text class="count-text">{{imageList.length}}/20</text>
+      </view>
+
+      <!-- Image Items -->
+      <view class="grid-item" wx:for="{{imageList}}" wx:key="id">
+        <view class="image-wrapper" bindtap="previewImage" data-index="{{index}}">
+          <image src="{{item.path}}" mode="aspectFill" class="thumb"></image>
+          <!-- Status Overlay -->
+          <view class="status-overlay" wx:if="{{item.status === 'compressing'}}">
+            <view class="loading-spinner"></view>
+          </view>
+          <view class="status-overlay error" wx:if="{{item.status === 'fail'}}">
+            <text>失败</text>
+          </view>
+          <!-- Ratio Tag -->
+          <view class="ratio-tag" wx:if="{{item.status === 'success'}}">-{{item.ratio}}%</view>
+        </view>
+        
+        <view class="item-info">
+          <view class="dims-row">
+            <text class="dims-text" wx:if="{{item.width}}">{{item.width}}×{{item.height}}</text>
+            <block wx:if="{{item.status === 'success' && item.outWidth && (item.outWidth !== item.width || item.outHeight !== item.height)}}">
+              <text class="arrow">→</text>
+              <text class="dims-text out">{{item.outWidth}}×{{item.outHeight}}</text>
+            </block>
+          </view>
+          <view class="size-row">
+            <text class="size-text old">{{item.originalSizeStr}}</text>
+            <text class="arrow" wx:if="{{item.status === 'success'}}">→</text>
+            <text class="size-text new" wx:if="{{item.status === 'success'}}">{{item.compressedSizeStr}}</text>
+          </view>
+        </view>
+
+        <view class="delete-btn" catchtap="deleteImage" data-index="{{index}}">
+          <image src="/images/icon/close.svg" class="delete-icon"></image>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- Controls -->
+  <view class="controls-area">
+    <!-- 压缩模式 -->
+    <view class="mode-tabs">
+      <view class="mode-tab {{mode === 'target' ? 'active' : ''}}" data-mode="target" bindtap="setMode">指定大小</view>
+      <view class="mode-tab {{mode === 'quality' ? 'active' : ''}}" data-mode="quality" bindtap="setMode">按质量压缩</view>
+    </view>
+
+    <!-- 质量模式 -->
+    <view class="slider-container" wx:if="{{mode === 'quality'}}">
+      <view class="slider-header">
+        <text>压缩质量</text>
+        <text class="quality-val">{{quality}}%</text>
+      </view>
+      <slider
+        min="10"
+        max="100"
+        value="{{quality}}"
+        block-size="24"
+        activeColor="#06B6D4"
+        bindchange="onQualityChange"
+      />
+    </view>
+
+    <!-- 目标大小模式 -->
+    <view class="target-container" wx:if="{{mode === 'target'}}">
+      <view class="slider-header">
+        <text>压缩后大小不超过</text>
+      </view>
+      <view class="target-row">
+        <input
+          class="target-input"
+          type="digit"
+          value="{{targetValue}}"
+          placeholder="如 500"
+          bindinput="onTargetInput"
+          bindblur="onTargetBlur"
+        />
+        <view class="unit-tabs">
+          <view class="unit-tab {{targetUnit === 'KB' ? 'active' : ''}}" data-unit="KB" bindtap="setTargetUnit">KB</view>
+          <view class="unit-tab {{targetUnit === 'MB' ? 'active' : ''}}" data-unit="MB" bindtap="setTargetUnit">MB</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 调整尺寸: 默认展开, 输入框预填原图尺寸 -->
+    <view class="resize-container">
+      <view class="resize-header" bindtap="toggleResizeOpen">
+        <text class="resize-title">调整尺寸</text>
+        <text class="summary-action">{{resizeOpen ? '收起 ▲' : '展开 ▼'}}</text>
+      </view>
+
+      <view class="resize-panel" wx:if="{{resizeOpen}}">
+        <view class="resize-tabs">
+          <view class="resize-tab {{resizeMode === 'both' ? 'active' : ''}}" data-mode="both" bindtap="setResizeMode">指定宽高</view>
+          <view class="resize-tab {{resizeMode === 'width' ? 'active' : ''}}" data-mode="width" bindtap="setResizeMode">指定宽度</view>
+          <view class="resize-tab {{resizeMode === 'height' ? 'active' : ''}}" data-mode="height" bindtap="setResizeMode">指定高度</view>
+          <view class="resize-tab {{resizeMode === 'percent' ? 'active' : ''}}" data-mode="percent" bindtap="setResizeMode">按百分比</view>
+        </view>
+
+        <block wx:if="{{resizeMode === 'both'}}">
+          <view class="resize-inputs">
+            <input class="resize-input" type="number" placeholder="宽" value="{{resizeWidth}}" data-field="resizeWidth" bindinput="onResizeInput" bindblur="onResizeBlur" />
+            <text class="unit-x">×</text>
+            <input class="resize-input" type="number" placeholder="高" value="{{resizeHeight}}" data-field="resizeHeight" bindinput="onResizeInput" bindblur="onResizeBlur" />
+            <text class="unit">px</text>
+          </view>
+          <checkbox-group bindchange="toggleKeepRatio">
+            <label class="keep-ratio">
+              <checkbox value="keep" checked="{{keepRatio}}" color="#06B6D4" />
+              <text>保持比例, 不变形</text>
+            </label>
+          </checkbox-group>
+        </block>
+
+        <view class="resize-inputs" wx:if="{{resizeMode === 'width'}}">
+          <input class="resize-input" type="number" placeholder="宽度" value="{{resizeWidth}}" data-field="resizeWidth" bindinput="onResizeInput" bindblur="onResizeBlur" />
+          <text class="unit">px, 高度按比例</text>
+        </view>
+
+        <view class="resize-inputs" wx:if="{{resizeMode === 'height'}}">
+          <input class="resize-input" type="number" placeholder="高度" value="{{resizeHeight}}" data-field="resizeHeight" bindinput="onResizeInput" bindblur="onResizeBlur" />
+          <text class="unit">px, 宽度按比例</text>
+        </view>
+
+        <view class="resize-inputs" wx:if="{{resizeMode === 'percent'}}">
+          <input class="resize-input" type="number" placeholder="100" value="{{resizePercent}}" data-field="resizePercent" bindinput="onResizeInput" bindblur="onResizeBlur" />
+          <text class="unit">% 原图尺寸</text>
+        </view>
+
+        <view class="resize-reset" bindtap="resetResize">恢复原图尺寸</view>
+      </view>
+    </view>
+
+    <view class="btn-group">
+      <button class="btn-primary" bindtap="saveAll" disabled="{{imageList.length === 0}}">保存全部图片</button>
+    </view>
+  </view>
+</view>

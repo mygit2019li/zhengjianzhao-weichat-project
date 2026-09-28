@@ -1,0 +1,2087 @@
+.section {
+  margin: 20rpx 0;
+}
+
+/* 覆盖全局标题样式，设置为左对齐 */
+.title {
+  text-align: left;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+  display: block;
+}
+
+.upload-preview-container {
+  /* 宽度减小20%，从100%改为80% */
+  width: 55%;
+  /* 设置宽高比为3:4 */
+  padding-top: 73%; /* 4/3 ≈ 1.3333，即133.33% */
+  position: relative;
+  border: 2rpx dashed #ddd;
+  border-radius: 8rpx;
+  background-color: #fafafa;
+  overflow: hidden;
+  cursor: pointer;
+  /* 居中显示 */
+  margin: 0 auto;
+}
+
+.make-upload-layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28rpx;
+  margin: 20rpx 0;
+}
+
+.make-preview-section {
+  flex: 1;
+  margin: 0;
+}
+
+.make-preview-section .upload-preview-container {
+  width: 68%;
+  padding-top: 90%;
+  margin: 0;
+}
+
+.upload-btn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #999;
+  font-size: 32rpx;
+}
+
+/* 上传按钮图标样式 */
+.upload-btn-icon {
+  font-size: 60rpx;
+  margin-bottom: 20rpx;
+  color: #666;
+}
+
+/* 上传按钮文字样式 */
+.upload-btn-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 上传图标容器样式 */
+.upload-icon-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20rpx;
+  width: 176rpx;
+  flex-shrink: 0;
+}
+
+/* 上传按钮容器 */
+.upload-buttons {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20rpx;
+}
+
+/* 上传按钮项 */
+.upload-btn-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12rpx;
+  width: 156rpx;
+  min-height: 132rpx;
+  border: 1rpx solid rgba(6, 182, 212, 0.16);
+  border-radius: 8rpx;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fcff 100%);
+  box-shadow: 0 8rpx 22rpx rgba(15, 23, 42, 0.08);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.upload-btn-item:active {
+  transform: scale(0.96);
+  background: #eefbff;
+  border-color: #06B6D4;
+  box-shadow: 0 4rpx 12rpx rgba(6, 182, 212, 0.18);
+}
+
+.upload-btn-icon-wrap {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-btn-icon-wrap.album {
+  background: #e9f8ff;
+}
+
+.upload-btn-icon-wrap.camera {
+  background: #eefaf4;
+}
+
+.upload-btn-label {
+  font-size: 25rpx;
+  color: #1f2937;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* 上传按钮图标图片 */
+.upload-btn-icon-img {
+  width: 42rpx;
+  height: 42rpx;
+}
+.upload-btn-icon-img-sc {
+  width: 40rpx;
+  height: 36rpx;
+  padding-right: 0;
+}
+
+/* 上传图标样式 */
+.upload-icon {
+  font-size: 40rpx;
+  color: #666;
+  text-align: center;
+}
+
+.upload-btn text {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+}
+
+.preview-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 上传备注样式 */
+.upload-note {
+  display: block;
+  text-align: center;
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 16rpx;
+  font-style: italic;
+}
+.size-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  /* 确保容器占满可用宽度 */
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  /* 确保内容从左到右排列 */
+  justify-content: flex-start;
+}
+
+.size-item {
+  padding: 20rpx 5rpx;
+  border: 2rpx solid #eee;
+  border-radius: 8rpx;
+  font-size: 21rpx;
+  text-align: center;
+  /* 一行展示三个尺寸，精确计算宽度 */
+  width: calc(33.33% - 8rpx);
+  box-sizing: border-box;
+  background-color: #fafafa;
+  /* 确保尺寸项为块级元素 */
+  display: block;
+  /* 移除可能的额外边距 */
+  margin: 0;
+  /* 强制不换行 */
+  white-space: nowrap;
+  /* 限制文本溢出 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.size-item.active {
+  border-color: #06B6D4;
+  background-color: #e8f4fd;
+  color: #06B6D4;
+}
+
+/* 特殊尺寸项样式 */
+.size-item.special {
+  border-color: #ff4d4f;
+  background-color: #fff5f5;
+  color: #ff4d4f;
+  font-weight: bold;
+}
+
+.size-item.special:active {
+  background-color: #ffebee;
+}
+
+/* 选中的特殊尺寸样式 */
+.size-item.special-selected {
+  border-color: #06B6D4;
+  background-color: #e8f4fd;
+  color: #06B6D4;
+  font-weight: bold;
+  border-width: 3rpx;
+}
+
+/* 自定义弹窗样式 */
+.custom-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  width: 80%;
+  max-height: 80%;
+  background-color: white;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx;
+  background-color: #f8f8f8;
+  border-bottom: 2rpx solid #eee;
+}
+
+.modal-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.close-btn {
+  font-size: 48rpx;
+  color: #999;
+  cursor: pointer;
+  padding: 0 16rpx;
+}
+
+.close-btn:active {
+  color: #666;
+}
+
+.modal-body {
+  padding: 24rpx;
+  max-height: 400rpx;
+  overflow-y: auto;
+}
+
+.modal-size-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.modal-size-item {
+  padding: 20rpx;
+  border: 2rpx solid #eee;
+  border-radius: 8rpx;
+  font-size: 32rpx;
+  text-align: left;
+  background-color: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-size-item:active {
+  background-color: #e8f4fd;
+  border-color: #06B6D4;
+  color: #06B6D4;
+}
+
+/* 证件照预览样式 */
+.result-preview-container {
+  /* 宽度减小20%，从100%改为80% */
+  width: 80%;
+  /* 设置宽高比为3:4 */
+  padding-top: 133.33%; /* 4/3 ≈ 1.3333，即133.33% */
+  position: relative;
+  margin-top: 20rpx;
+  border-radius: 8rpx;
+  background-color: #f5f5f5;
+  overflow: hidden;
+  border: 1rpx solid #eee;
+  /* 居中显示 */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.result-preview-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.result-actions {
+  margin-top: 20rpx;
+  display: flex;
+  justify-content: center;
+}
+
+.result-actions .btn {
+  width: 100%;
+  max-width: 400rpx;
+}
+
+.color-list {
+  display: flex;
+  gap: 30rpx;
+  margin: 30rpx 20rpx;
+  /* 允许换行，适应6个颜色选项 */
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 20rpx;
+  background-color: #f8f9fa;
+  border-radius: 16rpx;
+  box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+/* 新样式的颜色列表 */
+.color-list.new-style {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20rpx;
+  margin: 20rpx;
+  padding: 20rpx;
+  background-color: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.extended-color-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30rpx;
+  margin-top: 30rpx;
+  /* 居中对齐，适应6个颜色选项 */
+  justify-content: center;
+  padding: 20rpx;
+  background-color: #f8f9fa;
+  border-radius: 16rpx;
+  box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+/* 美颜功能样式 */
+.beauty-section {
+  padding: 20rpx;
+  background-color: #f5f5f5;
+  border-radius: 12rpx;
+}
+
+/* 美颜项目 */
+.beauty-item {
+  margin-bottom: 30rpx;
+}
+
+.beauty-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 美颜标题行 */
+.beauty-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15rpx;
+}
+
+/* 美颜标签 */
+.beauty-label {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: bold;
+}
+
+/* 美颜值容器 */
+.beauty-value-container {
+  display: flex;
+  align-items: center;
+  gap: 15rpx;
+}
+
+/* 美颜值 */
+.beauty-value {
+  font-size: 28rpx;
+  color: #06B6D4;
+  font-weight: bold;
+}
+
+/* 重置按钮 */
+.beauty-reset {
+  font-size: 24rpx;
+  color: #999;
+  cursor: pointer;
+  padding: 5rpx 10rpx;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 滑块容器 */
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 15rpx;
+}
+
+/* 滑块最小值 */
+.slider-min {
+  font-size: 24rpx;
+  color: #666;
+  width: 40rpx;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* 美颜滑块 */
+.beauty-slider {
+  flex: 1;
+}
+
+/* 滑块最大值 */
+.slider-max {
+  font-size: 24rpx;
+  color: #666;
+  width: 40rpx;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* 美颜行，用于并排展示亮度、对比度、饱和度 */
+.beauty-row {
+  display: flex;
+  gap: 15rpx;
+  flex-wrap: wrap;
+}
+
+/* 小尺寸美颜项目 */
+.beauty-item-small {
+  flex: 1;
+  min-width: 200rpx;
+  margin-bottom: 20rpx;
+}
+
+/* 水印功能样式 */
+.watermark-section {
+  padding: 20rpx;
+  background-color: #f5f5f5;
+  border-radius: 12rpx;
+}
+
+/* 水印切换 */
+.watermark-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10rpx;
+  padding: 8rpx;
+  border-radius: 8rpx;
+}
+
+.watermark-toggle-title {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: bold;
+}
+
+.toggle-options {
+  display: flex;
+  gap: 40rpx;
+}
+
+.toggle-option {
+  display: flex;
+  align-items: center;
+  font-size: 26rpx;
+  color: #666;
+}
+
+/* 水印切换单选按钮样式 */
+.toggle-option radio {
+  transform: scale(1.0);
+  margin-right: 10rpx;
+  font-size: 26rpx;
+}
+
+/* 自定义水印切换单选按钮样式 */
+.toggle-option radio .wx-radio-input {
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  border: 2rpx solid #ccc;
+  background-color: #fff;
+  transition: all 0.3s ease;
+}
+
+/* 自定义水印切换单选按钮选中样式 */
+.toggle-option radio .wx-radio-input.wx-radio-input-checked {
+  border-color: #06B6D4;
+  background-color: #fff;
+}
+
+/* 自定义水印切换单选按钮选中标记 */
+.toggle-option radio .wx-radio-input.wx-radio-input-checked::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background-color: #06B6D4;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+}
+/* 水印行容器 */
+.watermark-row {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 10rpx;
+  flex-wrap: wrap;
+}
+
+/* 水印项目 */
+.watermark-item {
+  flex: 1;
+  min-width: 200rpx;
+  margin-bottom: 10rpx;
+  padding: 20rpx;
+  background-color: #fff;
+  border-radius: 8rpx;
+}
+
+.watermark-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 水印标签 */
+.watermark-label {
+  display: block;
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 15rpx;
+}
+
+/* 水印输入框 */
+.watermark-input {
+  width: 90%;
+  font-size: 21rpx;
+  border: 1rpx solid #ddd;
+  border-radius: 3rpx;
+  box-sizing: border-box;
+  background-color: #fafafa;
+}
+
+/* 水印颜色选择器 */
+.watermark-color-picker {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.watermark-color {
+  width: 42rpx;
+  height: 42rpx;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* 水印标题行 */
+.watermark-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15rpx;
+}
+
+/* 水颜值容器 */
+.watermark-value-container {
+  display: flex;
+  align-items: center;
+  gap: 15rpx;
+}
+
+/* 水颜值 */
+.watermark-value {
+  font-size: 28rpx;
+  color: #06B6D4;
+  font-weight: bold;
+}
+
+/* 水印重置按钮 */
+.watermark-reset {
+  font-size: 24rpx;
+  color: #999;
+  cursor: pointer;
+  padding: 5rpx 10rpx;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 水印滑块 */
+.watermark-slider {
+  flex: 1;
+}
+
+/* 水印文字项目特殊样式 */
+.watermark-item-text {
+  flex: 2;
+}
+
+/* 水印颜色项目特殊样式 */
+.watermark-item-color {
+  flex: 1;
+}
+
+/* 统一水印页面样式与美颜页面一致 */
+.watermark-section.compact {
+  padding: 10rpx;
+  background-color: #f5f5f5;
+  border-radius: 12rpx;
+}
+
+.watermark-row.compact {
+  gap: 15rpx;
+  margin-bottom: 8rpx;
+  flex-wrap: wrap;
+}
+
+.watermark-item.compact {
+  margin-bottom: 10rpx;
+  padding: 10rpx;
+  background-color: transparent;
+}
+
+.watermark-item.small {
+  flex: 1;
+  min-width: 200rpx;
+  margin-bottom: 10rpx;
+  padding: 10rpx;
+  background-color: transparent;
+}
+
+.watermark-header.compact {
+  margin-bottom: 10rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.watermark-label.compact {
+  font-size: 24rpx;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+  display: block;
+}
+
+.watermark-value-container.compact {
+  gap: 15rpx;
+  display: flex;
+  align-items: center;
+}
+
+.watermark-value.compact {
+  font-size: 20rpx;
+  color: #06B6D4;
+  font-weight: bold;
+}
+
+.watermark-reset.compact {
+  font-size: 24rpx;
+  color: #999;
+  cursor: pointer;
+  padding: 5rpx 10rpx;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.slider-container.compact {
+  gap: 15rpx;
+  display: flex;
+  align-items: center;
+}
+
+.slider-min.compact,
+.slider-max.compact {
+  font-size: 24rpx;
+  color: #666;
+  width: 40rpx;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* 水印参数行 */
+.watermark-params-row {
+  display: flex;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+
+/* 颜色选择器样式 */
+.color-picker-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.color-picker-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.color-picker-modal-content.advanced {
+  position: relative;
+  background-color: #222;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  width: 90%;
+  max-width: 500rpx;
+  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.5);
+}
+
+.color-picker-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 20rpx;
+  text-align: center;
+}
+
+/* 主颜色选择区域 */
+.color-picker-main {
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx;
+  margin-bottom: 20rpx;
+  align-items: center;
+}
+
+/* 颜色选择器渐变区域 */
+.color-picker-gradient {
+  position: relative;
+  width: 400rpx;
+  height: 400rpx;
+  background: linear-gradient(to top, #000, transparent),
+              linear-gradient(to right, #fff, hsl(0, 100%, 50%));
+  border-radius: 4rpx;
+  cursor: pointer;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.color-picker-gradient-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to right, transparent, #fff);
+}
+
+/* 颜色选择器指示器 */
+.color-picker-selector {
+  position: absolute;
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  border: 2rpx solid #fff;
+  box-shadow: 0 0 8rpx rgba(0, 0, 0, 0.8);
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.color-picker-selector-inner {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background-color: #fff;
+  margin: 2rpx;
+  border: 2rpx solid #000;
+  border-radius: 50%;
+}
+
+/* 颜色滑块容器 */
+.color-picker-slider-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* 颜色滑块 */
+.color-picker-slider {
+  position: relative;
+  width: 400rpx;
+  height: 30rpx;
+  border-radius: 15rpx;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+/* 颜色滑块渐变 */
+.color-picker-slider-gradient {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, 
+    #ff0000 0%, 
+    #ffff00 17%, 
+    #00ff00 33%, 
+    #00ffff 50%, 
+    #0000ff 67%, 
+    #ff00ff 83%, 
+    #ff0000 100%);
+}
+
+/* 颜色滑块指示器 */
+.color-picker-slider-selector {
+  position: absolute;
+  top: 50%;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  background-color: #fff;
+  box-shadow: 0 0 10rpx rgba(0, 0, 0, 0.5);
+}
+
+.color-picker-slider-selector-inner {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  background-color: #ff0000;
+  margin: 4rpx;
+}
+
+/* 颜色值和预览区域 */
+.color-picker-value-section {
+  display: flex;
+  gap: 15rpx;
+  align-items: center;
+  margin-top: 20rpx;
+}
+
+/* 颜色预览 */
+.color-picker-preview {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 4rpx;
+  overflow: hidden;
+  border: 2rpx solid #444;
+  background-color: #fff;
+}
+
+.color-picker-preview-color {
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+}
+
+/* 颜色值输入区域 */
+.color-picker-input-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+/* 颜色值输入框 */
+.color-picker-input {
+  width: 100%;
+  padding: 12rpx 16rpx;
+  font-size: 26rpx;
+  color: #fff;
+  background-color: #333;
+  border: 2rpx solid #444;
+  border-radius: 4rpx;
+  box-sizing: border-box;
+  font-family: monospace;
+}
+
+/* 颜色格式标签 */
+.color-picker-format-tabs {
+  display: flex;
+  gap: 5rpx;
+  margin-top: 10rpx;
+}
+
+.color-picker-format-tab {
+  padding: 8rpx 16rpx;
+  font-size: 22rpx;
+  color: #aaa;
+  background-color: #333;
+  border-radius: 4rpx;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.color-picker-format-tab.active {
+  color: #fff;
+  background-color: #444;
+  border: 2rpx solid #666;
+}
+
+/* 打印排版样式 */
+.print-section {
+  padding: 20rpx;
+  background-color: #f5f5f5;
+  border-radius: 12rpx;
+}
+
+/* 相纸选择区域 */
+.paper-select-section {
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+/* 相纸选择标题 */
+.paper-select-title {
+  display: block;
+  font-size: 24rpx;
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+}
+
+/* 相纸选项容器 */
+.paper-options {
+  display: flex;
+  gap: 8rpx;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 相纸选项容器滚动条隐藏 */
+.paper-options::-webkit-scrollbar {
+  display: none;
+}
+
+/* 相纸选项 */
+.paper-option {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 18rpx;
+  background-color: #fff;
+  border: 2rpx solid #eee;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 选中的相纸选项 */
+.paper-option.active {
+  background-color: #fff;
+  color: #06B6D4;
+  border-color: #06B6D4;
+}
+
+/* 相纸选项中的单选按钮 */
+.paper-option radio {
+  transform: scale(1.0);
+  margin-right: 6rpx;
+
+  font-size: 18rpx;
+}
+
+/* 自定义单选按钮样式 */
+.paper-option radio .wx-radio-input {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  border: 2rpx solid #ccc;
+  background-color: #fff;
+  transition: all 0.3s ease;
+}
+
+/* 自定义单选按钮选中样式 */
+.paper-option radio .wx-radio-input.wx-radio-input-checked {
+  border-color: #06B6D4;
+  background-color: #fff;
+}
+
+/* 自定义单选按钮选中标记 */
+.paper-option radio .wx-radio-input.wx-radio-input-checked::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background-color: #06B6D4;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+}
+
+/* 小尺寸美颜标题行 */
+.beauty-header-small {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15rpx;
+}
+
+/* 单选容器 */
+.radio-container {
+  margin-top: 15rpx;
+  margin-bottom: 15rpx;
+  display: flex;
+  gap: 15rpx;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 5rpx;
+}
+
+/* 单选容器滚动条隐藏 */
+.radio-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* 单选选项 */
+.radio-option {
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 18rpx;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-right: 0;
+}
+
+/* 选中的单选选项 */
+.radio-option.active {
+  background-color: #fff;
+  color: #06B6D4;
+  border-color: #06B6D4;
+}
+
+/* 单选选项中的单选按钮 */
+.radio-option radio {
+  transform: scale(1.0);
+  margin-right: 6rpx;
+  font-size: 18rpx;
+  color: #06B6D4;
+}
+
+/* 自定义单选按钮样式 */
+.radio-option radio .wx-radio-input {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  border: 2rpx solid #ccc;
+  background-color: #fff;
+  transition: all 0.3s ease;
+}
+
+/* 自定义单选按钮选中样式 */
+.radio-option radio .wx-radio-input.wx-radio-input-checked {
+  border-color: #06B6D4;
+  background-color: #fff;
+}
+
+/* 自定义单选按钮选中标记 */
+.radio-option radio .wx-radio-input.wx-radio-input-checked::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background-color: #06B6D4;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+}
+
+/* 底部结果展示模块样式 */
+.result-module {
+  /* background-color: #ccc; */
+  padding: 20rpx;
+  color: #fff;
+  border-radius: 12rpx 12rpx 0 0;
+  margin-top: 20rpx;
+  box-sizing: border-box;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* 结果行 - 完全重写，确保没有样式冲突 */
+.result-row {
+  display: block;
+  margin-bottom: 20rpx;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: none;
+  background: transparent;
+}
+
+/* 结果项 - 完全重写，确保没有样式冲突 */
+.result-item {
+  width: 48% !important;
+  margin-right: 4% !important;
+  margin-bottom: 16rpx !important;
+  background-color: #3f3f46;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.5);
+  display: block !important;
+  float: left !important;
+  overflow: hidden;
+  box-sizing: border-box !important;
+  border: none !important;
+  flex: none !important;
+}
+
+/* 清除浮动 */
+.result-row::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* 第二个结果项不添加右边距 */
+.result-row .result-item:nth-child(2n) {
+  margin-right: 0 !important;
+}
+
+/* 全宽结果项 - 完全重写，确保没有样式冲突 */
+.result-item.full-width {
+  width: 100% !important;
+  margin-right: 0 !important;
+  margin-bottom: 16rpx !important;
+  float: none !important;
+  display: block !important;
+}
+
+
+/* 确保结果项内的图片容器也能正确显示 */
+.result-item-image-container {
+  width: 100% !important;
+  height: 380rpx !important;
+  border-radius: 8rpx !important;
+  overflow: hidden !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  position: relative !important;
+  /* margin-top: 12rpx !important; */
+}
+
+/* 结果项头部 */
+.result-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 结果项标题 */
+.result-item-title {
+  font-size: 24rpx;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* 结果项操作区 */
+.result-item-actions {
+  display: flex;
+  gap: 8rpx;
+}
+
+/* 结果项按钮 */
+.result-item-btn {
+  width: 36rpx;
+  height: 36rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6rpx;
+  background-color: #333;
+  font-size: 20rpx;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* 下载按钮 */
+.result-item-btn.download {
+  background-color: #333;
+}
+
+.result-item-btn.download:hover {
+  background-color: #444;
+}
+
+/* 展开按钮 */
+.result-item-btn.expand {
+  background-color: #333;
+}
+
+.result-item-btn.expand:hover {
+  background-color: #444;
+}
+
+/* 结果项图片容器 */
+.result-item-image-container {
+  width: 100% !important;
+  height: 380rpx !important;
+  background-color: #3f3f46;
+  border-radius: 8rpx;
+  overflow: hidden;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* 排版照预览容器 - 特殊处理以完整显示 */
+.result-item-image-container.layout {
+  height: 400rpx !important;
+  background-color: #2a2a2a;
+  padding: 20rpx;
+  box-sizing: border-box !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  overflow: hidden !important;
+}
+
+/* 排版照图片 - 缩放显示完整图片 */
+.layout-item {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+
+/* 结果项图片 */
+.result-item-image {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 结果图像操作区 */
+.result-image-actions {
+  display: flex;
+  gap: 8rpx;
+  z-index: 10;
+}
+
+/* 结果图像按钮 */
+.result-image-btn {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 6rpx;
+  background-color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* 结果图像按钮悬停效果 */
+.result-image-btn:hover {
+  background-color: #444;
+  transform: scale(1.05);
+}
+
+/* 结果图像按钮图标 */
+.result-image-btn-icon {
+  width: 22rpx;
+  height: 22rpx;
+  filter: brightness(0) invert(1);
+}
+
+/* 排版照网格 */
+.layout-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8rpx;
+  padding: 12rpx;
+  background-color: #fff;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* 全屏预览弹窗 */
+.fullscreen-preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.95);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.fullscreen-preview-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.fullscreen-preview-content.landscape {
+  flex-direction: row;
+}
+
+.fullscreen-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx 40rpx;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.fullscreen-preview-title {
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.fullscreen-preview-close {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  color: #fff;
+  font-size: 40rpx;
+}
+
+.fullscreen-preview-body {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20rpx;
+  overflow: hidden;
+}
+
+.fullscreen-preview-image {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+}
+
+.fullscreen-preview-image.landscape-image {
+  max-width: 100%;
+  max-height: 100%;
+  transform: rotate(0deg);
+}
+
+.fullscreen-preview-footer {
+  padding: 20rpx;
+  text-align: center;
+}
+
+.fullscreen-preview-tip {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 24rpx;
+}
+
+/* 排版照网格项 */
+.layout-grid-item {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 抠图图像容器 */
+.cutout-images {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 15rpx;
+  box-sizing: border-box;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+/* 操作按钮区 */
+.result-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 30rpx;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* 结果操作按钮 */
+.result-action-btn {
+  flex: 1;
+  padding: 20rpx;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  font-weight: bold;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+/* 重新制作按钮 */
+.result-action-btn.reset {
+  background-color: #3a3a3a;
+  color: #fff;
+}
+
+.result-action-btn.reset:hover {
+  background-color: #4a4a4a;
+}
+
+/* 保存到相册按钮 */
+.result-action-btn.save {
+  background-color: #06B6D4;
+  color: #fff;
+}
+
+.result-action-btn.save:hover {
+  background-color: #3ba9e8;
+}
+
+/* 小尺寸美颜标签 */
+.beauty-label-small {
+  font-size: 20rpx;
+  color: #333;
+  font-weight: bold;
+}
+
+/* 小尺寸美颜值容器 */
+.beauty-value-container-small {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+/* 小尺寸美颜值 */
+.beauty-value-small {
+  font-size: 20rpx;
+  color: #06B6D4;
+  font-weight: bold;
+}
+
+/* 小尺寸重置按钮 */
+.beauty-reset-small {
+  font-size: 20rpx;
+  color: #999;
+  cursor: pointer;
+  padding: 3rpx 8rpx;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 小尺寸滑块容器 */
+.slider-container-small {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+/* 小尺寸滑块最小值 */
+.slider-min-small {
+  font-size: 20rpx;
+  color: #666;
+  width: 30rpx;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* 小尺寸美颜滑块 */
+.beauty-slider-small {
+  flex: 1;
+}
+
+/* 小尺寸滑块最大值 */
+.slider-max-small {
+  font-size: 20rpx;
+  color: #666;
+  width: 30rpx;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* 效果预览容器样式 */
+.preview-container.small {
+  /* 宽度减小20%，从150rpx改为120rpx */
+  width: 120rpx;
+  /* 设置宽高比为3:4 */
+  height: 160rpx; /* 120rpx * 4/3 = 160rpx */
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+  overflow: hidden;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.preview-container.small .preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.color-item {
+  width: 60rpx;
+  height: 35rpx;
+  /* 更圆润的边角 */
+  border-radius: 6rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  /* 确保颜色项为块级元素 */
+  display: block;
+  /* 添加过渡效果 */
+  transition: all 0.3s ease;
+  /* 添加选中态的初始样式 */
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+/* 自定义颜色项 */
+.color-item.custom-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #333 !important;
+}
+
+/* 自定义文本 */
+.custom-text {
+  color: white;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+/* 颜色块悬停效果 */
+.color-item:active {
+  transform: scale(0.98);
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 选中状态的样式 */
+.color-item[style*="border-color: #06B6D4"] {
+  /* 选中时增加边框宽度和阴影 */
+  border-width: 4rpx !important;
+  box-shadow: 0 4rpx 12rpx rgba(6, 182, 212, 0.3);
+}
+
+/* 颜色项容器，包含颜色块和名称 */
+.color-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+  cursor: pointer;
+  /* 添加过渡效果 */
+  transition: all 0.2s ease;
+  padding: 8rpx;
+  border-radius: 20rpx;
+}
+
+/* 自定义颜色选项 */
+.color-option.custom {
+  margin-top: 0;
+}
+
+/* 颜色选项悬停效果 */
+.color-option:active {
+  transform: translateY(2rpx);
+}
+
+/* 颜色名称样式 */
+.color-name {
+  font-size: 18rpx;
+  color: #555;
+  text-align: center;
+  font-weight: 400;
+  /* 添加过渡效果 */
+  transition: all 0.3s ease;
+  margin-top: 8rpx;
+}
+
+/* 证件照设置模块样式 */
+.setting-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #eee;
+  /* 确保开始制作按钮水平居中靠右 */
+  flex-wrap: wrap;
+  gap: 15rpx;
+}
+
+/* 标签页样式 */
+.tab-container {
+  display: flex;
+  gap: 12rpx;
+  /* 允许按钮换行，适应多个按钮 */
+  flex-wrap: wrap;
+  /* 确保按钮容器占满可用空间 */
+  flex: 1;
+  /* 按钮从左到右排列 */
+  justify-content: flex-start;
+}
+
+.tab-item {
+  padding: 10rpx 20rpx;
+  border-radius: 20rpx;
+  font-size: 26rpx;
+  color: #666;
+  background-color: #f5f5f5;
+  cursor: pointer;
+  transition: all 0.2s;
+  /* 确保按钮不会太小 */
+  min-width: 100rpx;
+  text-align: center;
+}
+
+.tab-item.active {
+  background-color: #06B6D4;
+  color: white;
+}
+
+.tab-item:active {
+  opacity: 0.8;
+}
+
+/* 标签内容区域 */
+.tab-content {
+  margin-top: 20rpx;
+}
+
+/* 按钮容器 */
+.btn-container {
+  display: flex;
+  justify-content: center;
+  /* 确保开始制作按钮水平居中靠右 */
+  margin-left: auto;
+  /* 确保按钮不会被挤压 */
+  min-width: 150rpx;
+}
+
+/* 模块内容样式 */
+
+
+/* 胶囊式标签页样式 */
+.capsule-tab-container {
+  display: flex;
+  background-color: #f5f5f5;
+  border-radius: 30rpx;
+  /* padding: 8rpx; */
+  margin: 10rpx 0;
+  overflow: hidden;
+}
+
+.capsule-tab-item {
+  flex: 1;
+  padding: 16rpx 0;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #666;
+  border-radius: 24rpx;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.capsule-tab-item.active {
+  background-color: white;
+  color: #06B6D4;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.capsule-tab-item:active {
+  opacity: 0.8;
+}
+
+/* 禁用按钮样式 */
+.btn.disabled {
+  background-color: #ccc;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.btn.disabled:active {
+  opacity: 1;
+  background-color: #ccc;
+}
+
+/* 完整宽度按钮容器 */
+.btn-container-full {
+  display: flex;
+  justify-content: center;
+  margin-top: 20rpx;
+}
+
+.btn-container-full .btn {
+  width: 100%;
+  max-width: 600rpx;
+}
+
+/* 换底色功能样式 */
+.change-bg-section {
+  margin-bottom: 30rpx;
+}
+
+.change-bg-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+  color: #333;
+}
+
+.change-bg-option {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+
+.option-switch {
+  width: 80rpx;
+  height: 40rpx;
+  background-color: #ccc;
+  border-radius: 20rpx;
+  position: relative;
+  margin-right: 16rpx;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.option-switch.active {
+  background-color: #06B6D4;
+}
+
+.switch-slider {
+  width: 34rpx;
+  height: 34rpx;
+  background-color: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 3rpx;
+  left: 3rpx;
+  transition: all 0.3s;
+}
+
+.option-switch.active .switch-slider {
+  left: 43rpx;
+}
+
+.option-text {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.change-bg-desc {
+  font-size: 24rpx;
+  color: #999;
+  margin-left: 96rpx;
+}
+
+.extended-color-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+
+.preview-desc {
+  display: block;
+  text-align: center;
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 16rpx;
+  font-style: italic;
+}
+
+.preview-container.small {
+  width: 50%;
+  margin: 20rpx auto;
+}
+
+/* 预览弹窗样式 */
+.preview-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.preview-modal-content {
+  background-color: white;
+  border-radius: 16rpx;
+  width: 90%;
+  max-width: 600rpx;
+  overflow: hidden;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.3);
+}
+
+.preview-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx;
+  background-color: #f8f8f8;
+  border-bottom: 1rpx solid #eee;
+}
+
+.preview-modal-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.preview-modal-close {
+  font-size: 48rpx;
+  color: #999;
+  cursor: pointer;
+  padding: 0 16rpx;
+  line-height: 1;
+}
+
+.preview-modal-close:active {
+  color: #666;
+}
+
+.preview-modal-body {
+  padding: 24rpx;
+}
+
+.preview-modal-image-container {
+  width: 100%;
+  padding-top: 75%; /* 4:3 宽高比 */
+  position: relative;
+  border-radius: 8rpx;
+  background-color: #f5f5f5;
+  overflow: hidden;
+  margin-bottom: 24rpx;
+}
+
+.preview-modal-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.preview-modal-footer {
+  display: flex;
+  gap: 20rpx;
+  padding: 0 24rpx 24rpx;
+}
+
+.preview-modal-btn {
+  flex: 1;
+  padding: 20rpx;
+  border-radius: 8rpx;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preview-modal-btn.cancel {
+  background-color: #f5f5f5;
+  color: #666;
+  border: 1rpx solid #eee;
+}
+
+.preview-modal-btn.confirm {
+  background-color: #06B6D4;
+  color: white;
+}
+
+.preview-modal-btn:active {
+  opacity: 0.8;
+}
+
+/* 裁剪区域样式 */
+.crop-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+}
+
+.crop-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.crop-frame {
+  position: absolute;
+  border: 2rpx solid #06B6D4;
+  background-color: transparent;
+  box-shadow: inset 0 0 0 9999rpx rgba(0, 0, 0, 0.5);
+}
+
+.crop-controls {
+  position: absolute;
+  bottom: 20rpx;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 20rpx;
+  z-index: 20;
+}
+
+.crop-btn {
+  padding: 15rpx 30rpx;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.crop-btn.cancel {
+  background-color: #f5f5f5;
+  color: #666;
+  border: 1rpx solid #eee;
+}
+
+.crop-btn.confirm {
+  background-color: #06B6D4;
+  color: white;
+}
+
+.crop-btn:active {
+  opacity: 0.8;
+}
+
+/* 裁剪控制点样式 */
+.crop-handle {
+  position: absolute;
+  width: 20rpx;
+  height: 20rpx;
+  background-color: #06B6D4;
+  border: 2rpx solid white;
+  border-radius: 50%;
+  z-index: 15;
+}
+
+.crop-handle.top-left {
+  top: -10rpx;
+  left: -10rpx;
+  cursor: nwse-resize;
+}
+
+.crop-handle.top-right {
+  top: -10rpx;
+  right: -10rpx;
+  cursor: nesw-resize;
+}
+
+.crop-handle.bottom-left {
+  bottom: -10rpx;
+  left: -10rpx;
+  cursor: nesw-resize;
+}
+
+.crop-handle.bottom-right {
+  bottom: -10rpx;
+  right: -10rpx;
+  cursor: nwse-resize;
+}

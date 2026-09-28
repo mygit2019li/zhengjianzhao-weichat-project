@@ -1,0 +1,131 @@
+<view class="container">
+  <!-- Preview Area -->
+  <view class="preview-section">
+    <view class="preview-box {{userImage ? 'has-image' : ''}}">
+      <block wx:if="{{userImage}}">
+        <image src="{{userImage}}" mode="aspectFill" class="user-photo"></image>
+      </block>
+      
+      <view class="virtual-overlay">
+        <block wx:if="{{fontsLoaded}}">
+          <block wx:for="{{textElements}}" wx:key="id">
+            <view 
+              wx:if="{{item.visible}}"
+              class="v-element {{activeElementId === item.id ? 'active' : ''}} {{item.id === 'mainTitle' ? 'outlined' : ''}}"
+              style="left: {{item.x}}%; top: {{item.y}}%;"
+              data-id="{{item.id}}"
+              catchtouchstart="onTouchStart"
+              catchtouchmove="onTouchMove"
+              catchtouchend="onTouchEnd"
+            >
+              <view class="v-text" style="font-size: {{item.fontSize}}; font-family: {{item.fontFamily}}, {{item.fallback || 'sans-serif'}};">
+                <view class="v-line-top" wx:if="{{item.id === 'pinyin'}}"></view>
+                {{item.text}}
+                <view class="v-line-bottom" wx:if="{{item.id === 'pinyin'}}"></view>
+              </view>
+              <view class="v-delete" wx:if="{{activeElementId === item.id}}" catchtouchstart="deleteElement" data-id="{{item.id}}">删除</view>
+            </view>
+          </block>
+        </block>
+      </view>
+    </view>
+    <view class="interaction-hint">
+      <text class="hint-icon">💡</text>
+      <text>双击文字可编辑，还可随意拖动位置</text>
+    </view>
+  </view>
+
+  <!-- Edit Area -->
+  <view class="edit-area">
+  </view>
+
+  <!-- Hidden Canvas for Generation -->
+  <canvas type="2d" id="stitchCanvas" class="offscreen-canvas"></canvas>
+
+  <!-- Actions -->
+  <view class="page-footer">
+    <!-- Upload Button at Top Right Corner -->
+    <button class="bottom-upload-btn" bindtap="chooseImage" style="width:180rpx;">
+      <text class="upload-icon">+</text>
+      {{userImage ? '重新上传' : '上传图片'}}
+    </button>
+    <!-- Template Tabs -->
+    <view class="edit-section template-section">
+      <view class="section-title">选择模版</view>
+      <scroll-view scroll-x class="template-list" enable-flex>
+        <view 
+          wx:for="{{templates}}" 
+          wx:key="id" 
+          class="template-tab {{selectedTemplateId === item.id ? 'active' : ''}}"
+          bindtap="selectTemplate"
+          data-id="{{item.id}}"
+        >
+          {{item.name}}
+        </view>
+      </scroll-view>
+    </view>
+    <view class="action-buttons-row">
+      <button class="action-btn secondary" bindtap="resetMaking" disabled="{{!userImage}}">
+        重新制作
+      </button>
+      <button class="action-btn primary" bindtap="generateResult" disabled="{{!userImage}}">
+        {{isGenerating ? '生成中...' : '生成封面'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- Result Modal -->
+  <view class="result-modal" wx:if="{{resultPath}}">
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">生成结果</text>
+        <text class="close-btn" bindtap="closeResult">×</text>
+      </view>
+      <image src="{{resultPath}}" mode="aspectFit" class="result-preview" bindtap="previewResult"></image>
+      <view class="modal-footer">
+        <button class="modal-btn share-btn" bindtap="shareImage">分享给好友</button>
+        <button class="modal-btn save-btn" bindtap="saveImage">保存到相册</button>
+      </view>
+    </view>
+  </view>
+  <!-- Editor Modal -->
+  <view class="edit-modal" wx:if="{{isEditing}}" catchtap="cancelEdit">
+    <view class="modal-cnt" catchtap="doNothing">
+      <view class="modal-header">
+        <view class="modal-cancel" bindtap="cancelEdit">取消</view>
+        <view class="modal-title">编辑内容</view>
+        <view class="modal-confirm" bindtap="confirmEdit">保存</view>
+      </view>
+      
+      <view class="edit-input-wrapper">
+        <textarea 
+          class="edit-area-field" 
+          value="{{editText}}" 
+          bindinput="onEditInput" 
+          auto-focus 
+          fixed 
+          hold-keyboard
+          maxlength="20"
+          placeholder="请输入内容"
+        ></textarea>
+        <view class="input-counter">字数限制20字</view>
+      </view>
+      
+      <!-- Font Size Adjustment -->
+      <view class="font-size-control">
+        <text class="control-label">字号大小</text>
+        <view class="stepper">
+          <view class="step-btn minus {{currentFontSize <= 20 ? 'disabled' : ''}}" bindtap="decreaseFontSize">—</view>
+          <view class="step-value">{{currentFontSize}}<text class="unit">rpx</text></view>
+          <view class="step-btn plus {{currentFontSize >= 100 ? 'disabled' : ''}}" bindtap="increaseFontSize">+</view>
+        </view>
+      </view>
+      
+      <view class="modal-actions">
+        <button class="delete-btn" bindtap="deleteElement">
+          <text class="icon-trash">×</text>删除该元素
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

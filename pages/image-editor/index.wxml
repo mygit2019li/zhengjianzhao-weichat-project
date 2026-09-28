@@ -1,0 +1,45 @@
+<view class="container">
+  <view class="preview-area">
+    <image wx:if="{{!imagePath}}" class="placeholder-icon" src="/images/icon/add-image.svg" mode="aspectFit" bindtap="uploadImage"></image>
+    <text wx:if="{{!imagePath}}" class="placeholder-text" bindtap="uploadImage">点击上传图片</text>
+    
+    <image wx:if="{{resultImage}}" class="preview-image" src="{{resultImage}}" mode="aspectFit"></image>
+    <image wx:elif="{{imagePath}}" class="preview-image" src="{{imagePath}}" mode="aspectFit"></image>
+  </view>
+
+  <view class="controls-area" wx:if="{{transparentImage}}">
+    <view class="section-title">选择背景</view>
+    
+    <scroll-view scroll-x class="bg-scroll">
+      <view class="bg-options">
+        <view class="bg-item {{bgType === 'image' ? 'active' : ''}}" bindtap="selectBgImageCustom">
+          <view class="bg-thumb custom">
+            <image wx:if="{{bgType === 'image' && backgroundImage}}" src="{{backgroundImage}}" mode="aspectFill" class="full-size"></image>
+            <image wx:else src="/images/icon/add-image.svg" class="add-icon"></image>
+          </view>
+          <text>自定义背景</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="color-options">
+      <view wx:for="{{backgroundColorOptions}}" wx:key="key" class="color-swatch">
+        <view
+          class="color-item {{bgType === 'color' && backgroundColor === item.key ? 'active' : ''}} {{item.key === 'white' ? 'light-color' : ''}}"
+          style="{{item.style}}"
+          bindtap="selectBgColor"
+          data-color="{{item.key}}"
+        ></view>
+        <text class="color-name">{{item.name}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="footer-area">
+    <button wx:if="{{!imagePath}}" class="btn-primary" bindtap="uploadImage">上传图片</button>
+    <view wx:else class="btn-group">
+      <button class="btn-secondary" bindtap="uploadImage">重选图片</button>
+      <button class="btn-primary" bindtap="saveImage" disabled="{{!resultImage}}">保存到相册</button>
+    </view>
+  </view>
+</view>

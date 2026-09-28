@@ -1,0 +1,42 @@
+<view class="container">
+  <view class="header">
+    <view class="copy-box">
+      <text class="copy-text">{{copyText}}</text>
+      <view class="copy-btn" bindtap="copyToClipboard">复制文案</view>
+    </view>
+  </view>
+
+  <view class="grid-container">
+    <view class="grid">
+      <view 
+        class="grid-item" 
+        wx:for="{{images}}" 
+        wx:key="index"
+        bindtap="onItemTap"
+        data-index="{{index}}"
+      >
+        <image wx:if="{{item}}" src="{{item}}" mode="aspectFill" class="grid-image"></image>
+        <view wx:else class="grid-placeholder">
+          <text class="plus">+</text>
+        </view>
+      </view>
+    </view>
+    <view class="hint">点击图片可旋转或替换</view>
+  </view>
+
+  <view class="footer">
+    <button class="save-btn" bindtap="saveAll">保存全部图片到相册</button>
+    <view class="footer-tip">图片将按顺序保存，方便发布朋友圈</view>
+  </view>
+
+  <!-- Hidden Canvas for Rotation -->
+  <canvas canvas-id="editCanvas" style="width: {{canvasWidth}}px; height: {{canvasHeight}}px; position: absolute; left: -2000px; top: -2000px;"></canvas>
+
+  <!-- Action Sheet -->
+  <view class="modal-mask" wx:if="{{showActionSheet}}" bindtap="hideActionSheet"></view>
+  <view class="action-sheet {{showActionSheet ? 'show' : ''}}">
+    <view class="action-item" bindtap="rotateImage">旋转 90°</view>
+    <view class="action-item" bindtap="replaceImage">更换图片</view>
+    <view class="action-item cancel" bindtap="hideActionSheet">取消</view>
+  </view>
+</view>

@@ -1,0 +1,107 @@
+<view class="container">
+  <!-- 顶部灰色背景区域 -->
+  <view class="top-background">
+    <!-- 用户信息行 -->
+    <view class="user-info-row">
+      <!-- 左侧头像 -->
+      <view class="user-avatar-container">
+        <image wx:if="{{userInfo && userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" class="user-avatar" mode="aspectFit"></image>
+        <image wx:else src="/images/头像.png" class="user-avatar" mode="aspectFit"></image>
+      </view>
+      
+      <!-- 右侧问候语和陪伴天数 -->
+      <view class="user-greeting">
+        <view class="greeting-row">
+          <text class="hi-text">Hi, </text>
+          <text class="name-text">{{userInfo ? userInfo.nickName : '陌生人'}}</text>
+          <image src="https://img.icons8.com/material-outlined/24/ffffff/edit--v1.png" class="edit-icon" mode="aspectFit"></image>
+        </view>
+        <!-- <text class="accompany-text">已经陪伴你走过 3 天</text> -->
+      </view>
+    </view>
+    
+    <!-- 登录/登出按钮 -->
+    <view class="login-logout-area">
+      <view class="login-btn" wx:if="{{!userInfo}}" bindtap="goToLogin">立即登录</view>
+      <view class="logout-btn" wx:else bindtap="logout">退出登录</view>
+    </view>
+  </view>
+  
+  <!-- 下方白色卡片 -->
+  <view class="function-card">
+    <!-- 第一行功能图标 -->
+    <view class="function-row">
+      <!-- 使用微信官方推荐的客服按钮 -->
+      <button class="function-item contact-btn" open-type="contact" bindcontact="handleContact" session-from="sessionFrom">
+        <view class="function-icon">
+          <image src="/images/icon/客服.svg" class="icon-image" mode="aspectFit"></image>
+        </view>
+        <text class="function-text">我要留言</text>
+      </button>
+      <view class="function-item" bindtap="navigateToLike">
+        <view class="function-icon">
+          <image src="/images/icon/赞.svg" class="icon-image" mode="aspectFit"></image>
+        </view>
+        <text class="function-text">赏好评</text>
+      </view>
+      <button class="function-item contact-btn" open-type="share" >
+        <view class="function-icon">
+          <image src="/images/icon/分享.svg" class="icon-image" mode="aspectFit"></image>
+        </view>
+        <text class="function-text">分享</text>
+      </button>
+      <view class="function-item empty"></view>
+      <view class="function-item empty"></view>
+    </view>
+    
+    <view class="function-row">
+
+    </view>
+  </view>
+
+  <!-- AI助手模块 -->
+  <view class="explore-card">
+    <view class="explore-title">AI助手</view>
+    <view class="function-row">
+      <view class="function-item" bindtap="navigateToPdf2img">
+        <view class="function-icon">
+          <image src="/images/icon/pdf-color.png" class="icon-image" mode="aspectFit"></image>
+        </view>
+        <text class="function-text">PDF转图</text>
+      </view>
+      <view class="function-item" bindtap="navigateToTextbook">
+        <view class="function-icon">
+          <image src="/images/icon/book-color.png" class="icon-image" mode="aspectFit"></image>
+        </view>
+        <text class="function-text">课本封面</text>
+      </view>
+      <view class="function-item empty"></view>
+      <view class="function-item empty"></view>
+      <view class="function-item empty"></view>
+    </view>
+  </view>
+
+  
+  <!-- 其他功能文字 -->
+  <view class="other-functions">
+    <!-- <view class="other-item" bindtap="navigateToAbout">
+      <text class="other-text">关于我们</text>
+    </view>
+    <view class="other-item" bindtap="navigateToPrivacy">
+      <text class="other-text">隐私政策</text>
+    </view>
+    <view class="other-item" bindtap="navigateToTerms">
+      <text class="other-text">用户协议</text>
+    </view> -->
+
+    <view class="other-item" bindtap="navigateToPrivacy">
+      <text class="other-text">隐私说明：我们不留存任何用户上传的图片，也不会看到您上传的内容，请放心使用。</text>
+    </view>
+    
+  </view>
+  
+  <!-- 版本信息 -->
+  <view class="version">
+    <text class="version-text">版本 1.0.0</text>
+  </view>
+</view>

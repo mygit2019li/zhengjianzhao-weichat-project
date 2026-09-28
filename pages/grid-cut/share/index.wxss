@@ -1,0 +1,78 @@
+.container {
+  min-height: 100vh;
+  background: #f7f8fa;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.header {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+}
+
+.title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #111827;
+}
+
+.desc {
+  margin-top: 10rpx;
+  color: #6b7280;
+  font-size: 24rpx;
+}
+
+.grid {
+  margin-top: 20rpx;
+  display: grid;
+  gap: 10rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 12rpx;
+}
+
+.grid-item {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 10rpx;
+  background: #edf1f6;
+}
+
+.grid-image {
+  width: 100%;
+  height: 100%;
+}
+
+.index-badge {
+  position: absolute;
+  right: 8rpx;
+  bottom: 8rpx;
+  min-width: 34rpx;
+  height: 34rpx;
+  line-height: 34rpx;
+  text-align: center;
+  font-size: 20rpx;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 17rpx;
+  padding: 0 8rpx;
+}
+
+.share-area {
+  margin-top: 24rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16rpx);
+}
+
+.share-btn {
+  width: 100%;
+  height: 86rpx;
+  line-height: 86rpx;
+  border-radius: 44rpx;
+  border: none;
+  background: #1296db;
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: 600;
+}

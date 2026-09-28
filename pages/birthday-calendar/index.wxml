@@ -1,0 +1,193 @@
+<view class="page">
+  <view class="top-panel">
+    <picker mode="date" value="{{dateValue}}" bindchange="onDateChange">
+      <view class="date-picker">{{displayDate}}</view>
+    </picker>
+
+    <view class="ratio-group">
+      <view class="ratio-item {{posterRatio === '1:1' ? 'active' : ''}}" data-ratio="1:1" bindtap="onRatioChange">1:1</view>
+      <view class="ratio-item {{posterRatio === '3:4' ? 'active' : ''}}" data-ratio="3:4" bindtap="onRatioChange">3:4</view>
+      <view class="ratio-item {{posterRatio === '4:3' ? 'active' : ''}}" data-ratio="4:3" bindtap="onRatioChange">4:3</view>
+    </view>
+  </view>
+
+  <view class="preview-panel">
+    <view
+      id="posterPreview"
+      class="poster-preview {{posterRatio === '1:1' ? 'ratio-square' : (posterRatio === '3:4' ? 'ratio-3-4' : 'ratio-4-3')}}"
+      catchtouchstart="onBgTouchStart"
+      catchtouchmove="onBgTouchMove"
+    >
+      <view
+        class="bg-layer"
+      >
+        <image
+          wx:if="{{bgImage}}"
+          class="bg-image"
+          src="{{bgImage}}"
+          mode="scaleToFill"
+          style="width: {{bgDisplayW}}px; height: {{bgDisplayH}}px; transform: translate({{bgX}}px, {{bgY}}px);"
+        />
+        <view wx:else class="bg-fallback"></view>
+      </view>
+
+      <view class="day-touch-layer {{activeStickerId ? 'hidden' : ''}}">
+        <view class="day-touch-grid" style="{{dayTouchGridStyle}}">
+          <view
+            wx:for="{{calendarCells}}"
+            wx:key="index"
+            class="day-touch-cell"
+            data-day="{{item ? item.day : ''}}"
+            catchtouchend="onCalendarDayTouchEnd"
+          ></view>
+        </view>
+      </view>
+
+      <view class="sticker-layer">
+        <view
+          wx:for="{{stickers}}"
+          wx:key="id"
+          class="sticker-item {{activeStickerId === item.id ? 'active' : ''}}"
+          data-id="{{item.id}}"
+          style="left: {{item.x}}px; top: {{item.y}}px; width: {{item.w}}px; height: {{item.h}}px; transform: rotate({{item.rotation || 0}}deg);"
+          catchtouchstart="onStickerTouchStart"
+          catchtouchmove="onStickerTouchMove"
+          bindtap="onStickerTap"
+        >
+          <image class="sticker-image" src="{{item.src}}" mode="aspectFit"></image>
+          <view
+            wx:if="{{activeStickerId === item.id}}"
+            class="sticker-handle sticker-delete"
+            data-id="{{item.id}}"
+            data-handle="delete"
+            catchtouchstart="noop"
+            catchtouchmove="noop"
+            catchtap="onStickerDeleteTap"
+          >×</view>
+          <view
+            wx:if="{{activeStickerId === item.id}}"
+            class="sticker-handle sticker-scale"
+            data-id="{{item.id}}"
+            catchtouchstart="onStickerScaleStart"
+            catchtouchmove="onStickerScaleMove"
+            catchtouchend="onStickerHandleEnd"
+            catchtouchcancel="onStickerHandleEnd"
+          >↔</view>
+          <view
+            wx:if="{{activeStickerId === item.id}}"
+            class="sticker-handle sticker-rotate"
+            data-id="{{item.id}}"
+            catchtouchstart="onStickerRotateStart"
+            catchtouchmove="onStickerRotateMove"
+            catchtouchend="onStickerHandleEnd"
+            catchtouchcancel="onStickerHandleEnd"
+          >↻</view>
+        </view>
+      </view>
+
+      <view class="calendar-layer" style="{{calendarLayerStyle}}">
+        <view class="month-text" style="color: {{fontRgba}}; font-size: {{ (posterRatio === '1:1' ? 58 : 50) * fontScale / 100 }}rpx;">{{monthLabel}}</view>
+        <view class="week-row">
+          <text wx:for="{{weekHeaders}}" wx:key="*this" class="week-cell" style="color: {{fontRgba}}; font-size: {{ 22 * fontScale / 100 }}rpx;">{{item}}</text>
+        </view>
+        <view class="grid">
+          <view wx:for="{{calendarCells}}" wx:key="index" class="grid-cell">
+            <view wx:if="{{item}}" class="day-wrap">
+              <view wx:if="{{item.isSelected}}" class="day-mark"></view>
+              <text class="day-text" style="color: {{fontRgba}}; font-size: {{ (posterRatio === '1:1' ? 24 : 22) * fontScale / 100 }}rpx;">{{item.day}}</text>
+              <text class="lunar-text" style="color: {{fontRgba}}; font-size: {{ (posterRatio === '1:1' ? 16 : 14) * fontScale / 100 }}rpx;">{{item.lunar}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="style-panel">
+    <view class="style-row">
+      <view class="style-label">字体颜色</view>
+      <scroll-view scroll-x class="color-scroll" enable-flex>
+        <view class="color-list">
+          <view
+            wx:for="{{fontColors}}"
+            wx:key="*this"
+            class="color-dot {{fontColor === item ? 'active' : ''}}"
+            data-color="{{item}}"
+            bindtap="onFontColorChange"
+            style="background: {{item}};"
+          ></view>
+        </view>
+      </scroll-view>
+    </view>
+    <view class="style-row">
+      <view class="style-label">字体大小</view>
+      <slider class="style-slider" min="50" max="150" step="5" value="{{fontScale}}" block-size="18" activeColor="#1f6bff" bindchange="onFontScaleChange" bindchanging="onFontScaleChange" />
+    </view>
+    <view class="style-row">
+      <view class="style-label">透明度</view>
+      <slider class="style-slider" min="10" max="100" step="5" value="{{fontAlpha}}" block-size="18" activeColor="#1f6bff" bindchange="onFontAlphaChange" bindchanging="onFontAlphaChange" />
+    </view>
+  </view>
+
+  <view class="guide-panel">
+    <view class="guide-title">操作说明</view>
+    <text class="guide-item">1. 双击日历中的日期可快速选择生日日期。</text>
+    <text class="guide-item">2. 在预览区拖动背景图片可调整位置，支持在设置里缩放背景。</text>
+    <text class="guide-item">3. 选中贴纸后可拖动，使用边框控制点进行删除、缩放、旋转。</text>
+    <text class="guide-item">4. 点击底部“保存图片”即可导出到本地相册。</text>
+  </view>
+
+  <view class="bottom-actions">
+    <button class="btn primary" bindtap="savePoster">保存图片</button>
+    <button class="btn plain" bindtap="toggleSettings">设置</button>
+  </view>
+
+  <view wx:if="{{settingsVisible}}" class="settings-mask" catchtap="closeSettings">
+    <view class="settings-popup" catchtap="noop">
+      <view class="popup-header">
+        <text class="popup-title">日历设置</text>
+        <text class="popup-close" bindtap="closeSettings">关闭</text>
+      </view>
+
+      <scroll-view scroll-y class="popup-scroll">
+        <view class="section action-row">
+          <button class="btn plain" bindtap="chooseBackground">上传背景</button>
+          <button class="btn plain" bindtap="resetBackground">重置背景位置</button>
+        </view>
+        <view class="section">
+          <view class="section-title">预设背景</view>
+          <scroll-view scroll-x class="preset-scroll" enable-flex>
+            <view class="preset-list">
+              <view
+                wx:for="{{presetBackgrounds}}"
+                wx:key="index"
+                class="preset-item {{selectedPresetBgIndex === index ? 'active' : ''}}"
+                data-index="{{index}}"
+                bindtap="onPresetBgSelect"
+              >
+                <image class="preset-image" src="{{item}}" mode="aspectFill"></image>
+              </view>
+            </view>
+          </scroll-view>
+        </view>
+        <view class="section">
+          <view class="alpha-row">
+            <text class="alpha-label">背景缩放</text>
+            <slider min="100" max="250" step="1" value="{{bgScale}}" show-value bindchange="onBgScaleChange" />
+          </view>
+        </view>
+
+        <view class="section action-row">
+          <button class="btn plain" bindtap="chooseSticker">上传贴纸</button>
+          <button class="btn danger" bindtap="removeActiveSticker" disabled="{{!activeStickerId}}">删除当前贴纸</button>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <canvas
+    canvas-id="posterCanvas"
+    class="render-canvas"
+    style="width: {{renderCanvasWidth}}px; height: {{renderCanvasHeight}}px;"
+  ></canvas>
+</view>

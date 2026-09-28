@@ -1,0 +1,165 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f5f5f5;
+  padding: 20rpx;
+}
+
+.preview-area {
+  flex: 1;
+  background: #fff;
+  border-radius: 20rpx;
+  margin-bottom: 20rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.placeholder-icon {
+  width: 100rpx;
+  height: 100rpx;
+  opacity: 0.5;
+}
+
+.placeholder-text {
+  font-size: 28rpx;
+  color: #999;
+  margin-top: 20rpx;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.controls-area {
+  padding: 20rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+}
+
+.bg-scroll {
+  white-space: nowrap;
+  margin-bottom: 20rpx;
+}
+
+.bg-options {
+  display: flex;
+  gap: 20rpx;
+}
+
+.bg-item {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+  cursor: pointer;
+}
+
+.bg-thumb {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+  background: #f0f0f0;
+  border: 4rpx solid transparent;
+}
+
+.bg-item.active .bg-thumb {
+  border-color: #1296db;
+}
+
+.custom {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.add-icon {
+  width: 50rpx;
+  height: 50rpx;
+  opacity: 0.5;
+}
+
+.full-size {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.color-options {
+  display: flex;
+  gap: 20rpx;
+  flex-wrap: wrap;
+}
+
+.color-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.color-item {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 4rpx solid transparent;
+}
+
+.color-item.light-color {
+  border: 2rpx solid #e6e6e6;
+}
+
+.color-item.active {
+  border-color: #1296db;
+}
+
+.color-name {
+  font-size: 22rpx;
+  color: #666;
+  line-height: 1;
+}
+
+.footer-area {
+  padding: 20rpx;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ff9f6b 0%, #ff7f50 100%);
+  color: #fff;
+  width: 100%;
+  border: none;
+}
+
+.btn-primary[disabled] {
+  background: #f3c4b1;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.btn-group {
+  display: flex;
+  gap: 20rpx;
+}
+
+.btn-secondary {
+  background: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+  flex: 1;
+}
+
+.btn-group .btn-primary {
+  flex: 1;
+}

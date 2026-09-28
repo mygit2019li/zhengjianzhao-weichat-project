@@ -1,0 +1,46 @@
+<view class="container">
+  <view class="header">
+    <text class="title">PDF转图片</text>
+    <text class="subtitle">将 PDF 每一页导出为图片, 支持批量保存</text>
+  </view>
+
+  <!-- PDF 选择 -->
+  <view class="picker-area" bindtap="choosePdf">
+    <block wx:if="{{pdfPath}}">
+      <view class="pdf-card">
+        <view class="pdf-badge">PDF</view>
+        <view class="pdf-meta">
+          <text class="pdf-name">{{pdfName}}</text>
+          <text class="pdf-size">{{pdfSizeStr}}</text>
+        </view>
+        <text class="pdf-change">重选</text>
+      </view>
+    </block>
+    <block wx:else>
+      <view class="placeholder">
+        <image src="/images/icon/add-image.svg" class="add-icon"></image>
+        <text>从聊天记录选择 PDF 文件</text>
+        <text class="placeholder-tip">微信聊天中发送或收藏 PDF 后即可选取, 最大 20MB</text>
+      </view>
+    </block>
+  </view>
+
+  <!-- 转换按钮 -->
+  <view class="btn-group">
+    <button class="btn-primary" bindtap="convertPdf" disabled="{{!pdfPath || converting}}">{{converting ? '转换中...' : '转换为图片'}}</button>
+  </view>
+
+  <!-- 转换结果 -->
+  <view class="pages-area" wx:if="{{pdfPages.length}}">
+    <view class="pages-header">
+      <text class="pages-count">共 {{pdfPages.length}} 页</text>
+      <text class="pages-save" bindtap="savePdfPages">保存全部到相册</text>
+    </view>
+    <view class="pages-grid">
+      <view class="page-item" wx:for="{{pdfPages}}" wx:key="*this" bindtap="previewPdfPage" data-index="{{index}}">
+        <image src="{{item}}" mode="aspectFill" class="page-thumb"></image>
+        <text class="page-no">{{index + 1}}</text>
+      </view>
+    </view>
+  </view>
+</view>

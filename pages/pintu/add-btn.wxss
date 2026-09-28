@@ -1,0 +1,85 @@
+/* 悬浮添加图片按钮 - 按照图片UI设计 */
+.add-image-btn-floating {
+  position: absolute;
+  right: 30rpx;
+  bottom: 30rpx;
+  height: 72rpx;
+  padding: 0 28rpx;
+  border-radius: 36rpx;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+  z-index: 110;
+  transition: all 0.2s ease;
+}
+
+.add-image-btn-floating:active {
+  transform: scale(0.96);
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 图标容器 */
+.add-icon-wrap {
+  position: relative;
+  width: 36rpx;
+  height: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 图片图标 */
+.img-icon {
+  width: 32rpx;
+  height: 28rpx;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* 山形图案 */
+.img-mountain {
+  width: 100%;
+  height: 100%;
+  background: #333;
+  clip-path: polygon(0% 100%, 25% 60%, 50% 80%, 75% 40%, 100% 100%);
+  border-radius: 2rpx;
+}
+
+/* 太阳/加号小圆点 */
+.img-sun {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8rpx;
+  height: 8rpx;
+  background: #333;
+  border-radius: 50%;
+}
+
+/* 加号徽章 */
+.plus-badge {
+  position: absolute;
+  bottom: -4rpx;
+  right: -8rpx;
+  width: 18rpx;
+  height: 18rpx;
+  background: #333;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border: 2rpx solid #fff;
+}
+
+.add-text {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}

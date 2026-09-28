@@ -1,0 +1,53 @@
+<view class="container">
+  <view class="header">
+    <text class="title">轻松定制自己专属尺寸</text>
+  </view>
+  
+  <view class="form-card">
+    <!-- 名称输入 -->
+    <view class="form-item">
+      <text class="label">名称:</text>
+      <input class="input" placeholder="请输入名称" bindinput="onNameInput" value="{{name}}" />
+    </view>
+    
+    <!-- 宽度输入 -->
+    <view class="form-item">
+      <text class="label">宽度:</text>
+      <input class="input" placeholder="" type="number" bindinput="onWidthInput" value="{{width}}" />
+      <text class="unit">像素: px</text>
+    </view>
+    
+    <!-- 高度输入 -->
+    <view class="form-item">
+      <text class="label">高度:</text>
+      <input class="input" placeholder="" type="number" bindinput="onHeightInput" value="{{height}}" />
+      <text class="unit">像素: px</text>
+    </view>
+    
+    <!-- 分辨率输入 -->
+    <view class="form-item">
+      <text class="label">分辨率:</text>
+      <input class="input" placeholder="" type="number" bindinput="onDpiInput" value="{{dpi}}" />
+      <text class="unit">分辨率: dpi</text>
+    </view>
+    
+    <!-- 尺寸输入 -->
+    <view class="form-item">
+      <text class="label">尺寸:</text>
+      <input class="input" placeholder="" bindinput="onSizeInput" value="{{size}}" />
+      <text class="unit">尺寸: mm</text>
+    </view>
+    
+    <!-- 像素显示 -->
+    <view class="form-item">
+      <text class="label">像素:</text>
+      <input class="input readonly" placeholder="" value="{{pixelDisplay}}" disabled />
+      <text class="unit">px</text>
+    </view>
+  </view>
+  
+  <!-- 保存按钮 -->
+  <view class="save-btn" bindtap="saveSize">
+    <text class="btn-text">保存尺寸</text>
+  </view>
+</view>

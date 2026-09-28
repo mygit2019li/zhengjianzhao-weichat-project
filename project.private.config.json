@@ -1,0 +1,54 @@
+{
+  "libVersion": "3.14.3",
+  "projectname": "cxx",
+  "setting": {
+    "urlCheck": false,
+    "coverView": true,
+    "lazyloadPlaceholderEnable": false,
+    "preloadBackgroundData": false,
+    "autoAudits": false,
+    "showShadowRootInWxmlPanel": true,
+    "compileHotReLoad": true,
+    "useIsolateContext": true,
+    "bigPackageSizeSupport": true
+  },
+  "description": "项目私有配置文件。此文件中的内容将覆盖 project.config.json 中的相同字段。项目的改动优先同步到此文件中。详见文档：https://developers.weixin.qq.com/miniprogram/dev/devtools/projectconfig.html",
+  "condition": {
+    "miniprogram": {
+      "list": [
+        {
+          "name": "pages/pintu/index",
+          "pathName": "pages/pintu/index",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
+          "name": "封面图",
+          "pathName": "pages/textbook/index",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
+          "name": "朋友圈九宫格",
+          "pathName": "pages/jiugongge/index",
+          "query": "activeTab=copy",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
+          "name": "pages/idphoto/index",
+          "pathName": "pages/idphoto/index",
+          "query": "",
+          "launchMode": "default",
+          "scene": null,
+          "partialCompile": {
+            "enabled": true,
+            "pages": []
+          }
+        }
+      ]
+    }
+  }
+}

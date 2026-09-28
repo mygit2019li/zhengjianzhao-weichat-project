@@ -1,0 +1,227 @@
+<view class="container">
+  <!-- Copywriting Tab -->
+  <view class="tab-content copywriting-content" wx:if="{{activeTab === 'copy'}}">
+    <!-- Category Scroll -->
+    <scroll-view scroll-x class="copy-category-scroll" enable-flex>
+      <view 
+        wx:for="{{copyCategories}}" 
+        wx:key="*this"
+        class="copy-category-item {{currentCopyCategory === item ? 'active' : ''}}"
+        bindtap="selectCopyCategory"
+        data-category="{{item}}"
+      >{{item}}</view>
+    </scroll-view>
+
+    <!-- Copy List -->
+    <scroll-view scroll-y class="copy-list-scroll">
+      <view class="moments-item" wx:for="{{displayCopyItems}}" wx:key="index">
+        <!-- Avatar -->
+        <image class="moments-avatar" src="/images/头像.png" mode="aspectFill"></image>
+        
+        <!-- Content -->
+        <view class="moments-content">
+          <!-- Nickname -->
+          <view class="moments-nickname">精选文案</view>
+          
+          <!-- Text -->
+          <view class="moments-text {{item.isExpanded ? 'expanded' : (item.showExpandBtn ? 'collapsed' : '')}}" wx:if="{{item.text}}">
+            <text user-select>{{item.text}}</text>
+          </view>
+          
+          <!-- Expand/Collapse Button -->
+          <view class="expand-btn" wx:if="{{item.showExpandBtn}}" catchtap="toggleText" data-index="{{index}}">
+            {{item.isExpanded ? '收起' : '全文'}}
+          </view>
+          
+          <!-- Images Grid - 微信朋友圈规则 -->
+          <view class="moments-images-box {{item.images.length === 1 ? 'single-image-box' : ''}}" wx:if="{{item.images && item.images.length > 0}}">
+            <!-- 1张图：宽度自适应，最大高度限制 -->
+            <view wx:if="{{item.images.length === 1}}" class="single-image-wrapper">
+              <image 
+                src="{{item.images[0]}}" 
+                mode="aspectFit" 
+                class="moments-single-image {{item.imageRatio && item.imageRatio < 0.8 ? 'tall-image' : ''}}"
+                bindtap="previewImage"
+                data-src="{{item.images[0]}}"
+                data-urls="{{item.images}}"
+              ></image>
+            </view>
+            
+            <!-- 2张图：2列，正方形 -->
+            <view wx:elif="{{item.images.length === 2}}" class="moments-image-grid grid-2">
+              <view 
+                wx:for="{{item.images}}" 
+                wx:for-item="img" 
+                wx:for-index="imgIndex"
+                wx:key="*this" 
+                class="moments-grid-image"
+                bindtap="previewImage"
+                data-src="{{img}}"
+                data-urls="{{item.images}}"
+              >
+                <image src="{{img}}" mode="aspectFill"></image>
+              </view>
+            </view>
+            
+            <!-- 4张图：2×2网格 -->
+            <view wx:elif="{{item.images.length === 4}}" class="moments-image-grid grid-4">
+              <view 
+                wx:for="{{item.images}}" 
+                wx:for-item="img" 
+                wx:for-index="imgIndex"
+                wx:key="*this" 
+                class="moments-grid-image"
+                bindtap="previewImage"
+                data-src="{{img}}"
+                data-urls="{{item.images}}"
+              >
+                <image src="{{img}}" mode="aspectFill"></image>
+              </view>
+            </view>
+            
+            <!-- 3张、5-9张图：3列网格 -->
+            <view wx:else class="moments-image-grid grid-3">
+              <view 
+                wx:for="{{item.images}}" 
+                wx:for-item="img" 
+                wx:for-index="imgIndex"
+                wx:key="*this" 
+                class="moments-grid-image"
+                bindtap="previewImage"
+                data-src="{{img}}"
+                data-urls="{{item.images}}"
+              >
+                <image src="{{img}}" mode="aspectFill"></image>
+              </view>
+            </view>
+          </view>
+
+          <!-- Footer Actions -->
+          <view class="moments-footer">
+            <view class="moments-time">刚刚</view>
+            <view class="moments-actions">
+              <view
+                class="moments-action-btn copy-btn"
+                wx:if="{{item.hasText}}"
+                catchtap="copyToClipboard"
+                data-content="{{item.text}}"
+              >
+                <text>复制文案</text>
+              </view>
+              <view class="moments-action-btn download-btn" catchtap="downloadAllImages" data-index="{{index}}" wx:if="{{item.images && item.images.length > 0}}">
+                <image class="btn-icon" src="/images/icon/下载.svg" mode="aspectFit"></image>
+                <text>下载图片</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <view class="copy-hint" wx:if="{{displayCopyItems.length === 0}}">暂无相关文案</view>
+      <view style="height: 100rpx;"></view> <!-- Bottom padding -->
+    </scroll-view>
+  </view>
+
+  <!-- Image Cutting Tab -->
+  <view class="tab-content grid-content" wx:if="{{activeTab === 'grid'}}">
+    <!-- Hint Text -->
+    <view class="hint-text">
+      <text>长（宽）图可上下（左右）拖动</text>
+    </view>
+
+  <!-- 9-Grid Preview Area -->
+  <view class="preview-container">
+    <!-- Shape Hint (Top Badge) -->
+    <view wx:if="{{showShapeHint}}" class="shape-hint-badge">
+      <text class="hint-icon">✨</text>
+      <text class="hint-text">{{currentShapeName}}效果将在保存时应用</text>
+    </view>
+    
+    <view class="grid-wrapper" style="{{maskStyle}}">
+      <!-- Touch Area for Image Manipulation -->
+      <view 
+        class="touch-area"
+        bindtouchstart="startTouch"
+        catchtouchmove="onTouchMove"
+        bindtouchend="endTouch"
+        bindtouchcancel="endTouch"
+      >
+        <!-- Image Display -->
+        <image 
+          wx:if="{{imagePath}}"
+          class="grid-image" 
+          src="{{imagePath}}" 
+          mode="aspectFit"
+          style="width: {{imageWidth * imageScale}}px; height: {{imageHeight * imageScale}}px; transform: translate({{-cropX * imageScale}}px, {{-cropY * imageScale}}px);"
+        ></image>
+        
+        <!-- Placeholder when no image -->
+        <view wx:else class="placeholder">
+          <text class="placeholder-icon">🖼️</text>
+          <text class="placeholder-text">点击下方按钮选择图片</text>
+        </view>
+
+        <!-- Grid Lines (Dynamic based on gridRows and gridCols) -->
+        <view class="grid-lines">
+          <!-- Horizontal Lines -->
+          <block wx:for="{{gridRows - 1}}" wx:key="index">
+            <view class="grid-line horizontal" style="top: {{(index + 1) / gridRows * 100}}%;"></view>
+          </block>
+          <!-- Vertical Lines -->
+          <block wx:for="{{gridCols - 1}}" wx:key="index">
+            <view class="grid-line vertical" style="left: {{(index + 1) / gridCols * 100}}%;"></view>
+          </block>
+        </view>
+        
+        <!-- Shape Overlay for Preview -->
+        <view wx:if="{{showShapeOverlay}}" class="shape-overlay">
+          <image class="shape-overlay-image" src="{{shapeOverlayUrl}}" mode="aspectFill"></image>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Bottom Action Buttons -->
+  <view class="action-buttons">
+    <view class="tip-text">注：保存后发布朋友圈时该图序列将9张图片</view>
+    <view class="button-group">
+      <button class="action-btn select-btn" bindtap="chooseImage">选择图片</button>
+      <button class="action-btn share-btn" bindtap="shareGrid" disabled="{{!imagePath}}">分享好友</button>
+      <button class="action-btn save-btn" bindtap="saveImages" disabled="{{!imagePath}}">保存图片</button>
+    </view>
+  </view>
+
+  <!-- Shape/Grid Selector -->
+  <view class="shape-selector-container">
+    <!-- Shape List (Templates) - 3 rows grid -->
+    <scroll-view 
+      scroll-y 
+      class="shape-scroll-vertical" 
+      enable-flex 
+      bindscrolltolower="onScrollToLower"
+    >
+      <view class="shape-grid-layout">
+        <view 
+          class="shape-item {{selectedShape === item.id ? 'active' : ''}}"
+          wx:for="{{shapeList}}" 
+          wx:key="id"
+          bindtap="selectShape"
+          data-shape="{{item.id}}"
+        >
+          <view class="shape-icon-wrapper">
+            <image 
+              class="shape-icon" 
+              src="{{(selectedShape === item.id ? item.activeIconUrl : item.iconUrl) || ''}}"
+              mode="aspectFit"
+            ></image>
+          </view>
+        </view>
+      </view>
+      <view wx:if="{{!hasMore && shapeList.length > 0}}" class="no-more-text">已经是全部模板了</view>
+    </scroll-view>
+  </view>
+  </view>
+
+  <!-- Hidden Canvas for Image Generation -->
+  <canvas canvas-id="gridCanvas" style="width: 2000px; height: 2000px; position: fixed; left: -9999px; top: -9999px;"></canvas>
+</view>

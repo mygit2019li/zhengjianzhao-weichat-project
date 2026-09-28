@@ -1,0 +1,75 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/subtitle-puzzle/index",
+    "pages/image-edit/index",
+    "pages/webview/index",
+    "pages/long-puzzle/index",
+    "pages/moments-copy/index",
+    "pages/grid-cut/index",
+    "pages/grid-cut/detail/index",
+    "pages/grid-cut/share/index",
+    "pages/idphoto/index",
+    "pages/image-editor/index",
+    "pages/image-crop/index",
+    "pages/custom-size/index",
+    "pages/jiugongge/index",
+    "pages/jiugongge/detail/index",
+    "pages/pintu/index",
+    "pages/compress/index",
+    "pages/convert/index",
+    "pages/pdf2img/index",
+    "pages/my/index",
+    "pages/login/index",
+    "pages/birthday-calendar/index"
+  ],
+  "subPackages": [
+    {
+      "root": "pages/textbook",
+      "name": "textbook",
+      "pages": [
+        "index"
+      ]
+    },
+    {
+      "root": "pages/id-watermark",
+      "name": "id-watermark",
+      "pages": [
+        "index"
+      ]
+    }
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#f5f5f5",
+    "navigationBarTitleText": "拼九宫格图",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#999",
+    "selectedColor": "#1296db",
+    "backgroundColor": "#fff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "./images/icon/首页.png",
+        "selectedIconPath": "./images/icon/首页-选中.png"
+      },
+      {
+        "pagePath": "pages/moments-copy/index",
+        "text": "朋友圈文案",
+        "iconPath": "./images/icon/朋友圈.png",
+        "selectedIconPath": "./images/icon/朋友圈-选中.png"
+      },
+      {
+        "pagePath": "pages/my/index",
+        "text": "我的",
+        "iconPath": "./images/icon/个人中心.png",
+        "selectedIconPath": "./images/icon/个人中心-选中.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

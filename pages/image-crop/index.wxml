@@ -1,0 +1,142 @@
+<view class="container">
+  <!-- 引导页 -->
+  <view class="guide-page" wx:if="{{!hasStarted}}">
+    <view class="guide-header">
+      <text class="guide-title">图片裁剪</text>
+      <text class="guide-subtitle">自由裁剪，精准构图</text>
+    </view>
+    
+    <view class="guide-content">
+      <view class="guide-hero-section">
+        <view class="crop-demo-container">
+          <view class="crop-demo-frame">
+            <image src="/images/home/hero.jpg" mode="aspectFill" class="crop-demo-img"></image>
+            <view class="crop-frame-overlay">
+              <view class="crop-corner tl"></view>
+              <view class="crop-corner tr"></view>
+              <view class="crop-corner bl"></view>
+              <view class="crop-corner br"></view>
+            </view>
+          </view>
+        </view>
+        <view class="hero-text-overlay">
+          <view class="feature-list">
+            <view class="feature-item">
+              <view class="feature-icon">✂️</view>
+              <text class="feature-text">自由比例裁剪</text>
+            </view>
+            <view class="feature-item">
+              <view class="feature-icon">📐</view>
+              <text class="feature-text">多种预设比例</text>
+            </view>
+            <view class="feature-item">
+              <view class="feature-icon">🔄</view>
+              <text class="feature-text">支持旋转调整</text>
+            </view>
+            <view class="feature-item">
+              <view class="feature-icon">👆</view>
+              <text class="feature-text">手势缩放拖拽</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+    
+    <view class="guide-footer">
+      <view class="start-btn" bindtap="startExperience">开始裁剪</view>
+    </view>
+  </view>
+
+  <!-- 编辑页面 -->
+  <block wx:else>
+    <view class="crop-area">
+      <image wx:if="{{!imagePath}}" class="placeholder-icon" src="/images/icon/add-image.svg" mode="aspectFit" bindtap="uploadImage"></image>
+      <text wx:if="{{!imagePath}}" class="placeholder-text" bindtap="uploadImage">点击上传图片</text>
+      
+      <block wx:if="{{imagePath}}">
+        <!-- Image Display (Moved by transform) -->
+        <view class="image-wrapper" 
+              style="width: {{viewportWidth}}px; height: {{viewportHeight}}px; left: {{viewportX}}px; top: {{viewportY}}px;">
+          <image 
+            src="{{imagePath}}" 
+            class="target-image"
+            style="width: {{imgDrawWidth}}px; height: {{imgDrawHeight}}px; transform: translate({{imgX}}px, {{imgY}}px) scale({{imgScale}}) rotate({{imgRotate}}deg); transform-origin: center;"
+            bindtouchstart="startTouch"
+            bindtouchmove="onTouchMove"
+            bindtouchend="endTouch"
+          ></image>
+        </view>
+        
+        <!-- Crop Frame (Fixed Viewport) -->
+        <view class="crop-frame" style="width: {{viewportWidth}}px; height: {{viewportHeight}}px; left: {{viewportX}}px; top: {{viewportY}}px;">
+          <view class="corner top-left" catchtouchstart="startResize" catchtouchmove="onResize" catchtouchend="endResize" data-corner="tl"></view>
+          <view class="corner top-right" catchtouchstart="startResize" catchtouchmove="onResize" catchtouchend="endResize" data-corner="tr"></view>
+          <view class="corner bottom-left" catchtouchstart="startResize" catchtouchmove="onResize" catchtouchend="endResize" data-corner="bl"></view>
+          <view class="corner bottom-right" catchtouchstart="startResize" catchtouchmove="onResize" catchtouchend="endResize" data-corner="br"></view>
+        </view>
+        
+        <!-- Mask Overlay (Darkened area outside crop) -->
+        <view class="mask top" style="height: {{viewportY}}px;"></view>
+        <view class="mask bottom" style="top: {{viewportY + viewportHeight}}px;"></view>
+        <view class="mask left" style="width: {{viewportX}}px; top: {{viewportY}}px; height: {{viewportHeight}}px;"></view>
+        <view class="mask right" style="left: {{viewportX + viewportWidth}}px; top: {{viewportY}}px; height: {{viewportHeight}}px;"></view>
+      </block>
+    </view>
+
+    <view class="controls-area" wx:if="{{imagePath}}">
+      <!-- Rotate Controls -->
+      <view class="control-row">
+        <view class="icon-btn" bindtap="rotateLeft">
+          <image src="/images/icon/rotate.svg" class="control-icon" style="transform: scaleX(-1);"></image>
+          <text>向左旋转</text>
+        </view>
+        <view class="icon-btn" bindtap="rotateRight">
+          <image src="/images/icon/rotate.svg" class="control-icon"></image>
+          <text>向右旋转</text>
+        </view>
+        <view class="icon-btn" bindtap="resetCrop">
+          <image src="/images/icon/refresh.svg" class="control-icon"></image>
+          <text>重置</text>
+        </view>
+      </view>
+
+      <!-- Aspect Ratio Controls -->
+      <scroll-view scroll-x class="ratio-scroll">
+        <view class="ratio-options">
+          <view class="ratio-item {{aspectRatio === 0 ? 'active' : ''}}" bindtap="setAspectRatio" data-ratio="0">
+            <view class="ratio-box free"></view>
+            <text>自由</text>
+          </view>
+          <view class="ratio-item {{aspectRatio === 1 ? 'active' : ''}}" bindtap="setAspectRatio" data-ratio="1">
+            <view class="ratio-box square"></view>
+            <text>1:1</text>
+          </view>
+          <view class="ratio-item {{aspectRatio === 3/4 ? 'active' : ''}}" bindtap="setAspectRatio" data-ratio="{{3/4}}">
+            <view class="ratio-box p3-4"></view>
+            <text>3:4</text>
+          </view>
+          <view class="ratio-item {{aspectRatio === 4/3 ? 'active' : ''}}" bindtap="setAspectRatio" data-ratio="{{4/3}}">
+            <view class="ratio-box p4-3"></view>
+            <text>4:3</text>
+          </view>
+          <view class="ratio-item {{aspectRatio === 9/16 ? 'active' : ''}}" bindtap="setAspectRatio" data-ratio="{{9/16}}">
+            <view class="ratio-box p9-16"></view>
+            <text>9:16</text>
+          </view>
+          <view class="ratio-item {{aspectRatio === 16/9 ? 'active' : ''}}" bindtap="setAspectRatio" data-ratio="{{16/9}}">
+            <view class="ratio-box p16-9"></view>
+            <text>16:9</text>
+          </view>
+        </view>
+      </scroll-view>
+
+      <view class="btn-group">
+        <button class="btn-secondary" bindtap="uploadImage">重选</button>
+        <button class="btn-primary" bindtap="saveImage">保存</button>
+      </view>
+    </view>
+  </block>
+  
+  <!-- Canvas for Exporting -->
+  <canvas type="2d" id="cropCanvas" style="width: {{canvasWidth}}px; height: {{canvasHeight}}px; position: absolute; left: -9999px; top: -9999px;"></canvas>
+</view>

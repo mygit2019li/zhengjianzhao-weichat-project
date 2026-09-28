@@ -1,0 +1,195 @@
+<view class="container">
+  <!-- 导航栏 -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px; height: calc(96rpx + {{statusBarHeight}}px);">
+    <view class="nav-back" bindtap="goBack">
+      <text class="back-icon">‹</text>
+    </view>
+    <text class="nav-title">证件加水印</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <!-- 预览区域 -->
+  <view class="preview-section" style="margin-top: calc(96rpx + {{statusBarHeight}}px);">
+    <view class="preview-box {{userImage ? 'has-image' : ''}}" style="{{previewBoxStyle}}">
+      <block wx:if="{{userImage}}">
+        <image src="{{userImage}}" mode="aspectFit" class="user-photo"></image>
+        <!-- 水印预览层 -->
+        <view class="watermark-preview {{watermarkPosition}}">
+          <view 
+            wx:for="{{previewItems}}" 
+            wx:key="id" 
+            class="watermark-item {{item.className}}" 
+            style="{{item.style}}"
+          >
+            {{customText}}
+          </view>
+        </view>
+      </block>
+      <block wx:else>
+        <view class="upload-placeholder" bindtap="chooseImage">
+          <text class="icon-plus">+</text>
+          <text class="placeholder-text">点击上传证件照片</text>
+          <text class="placeholder-subtext">支持身份证、驾驶证、户口本等</text>
+        </view>
+      </block>
+      
+      <!-- 重新上传按钮 -->
+      <block wx:if="{{userImage}}">
+        <button class="reupload-btn" bindtap="chooseImage">
+          <text class="reupload-icon">↻</text>
+          重新上传
+        </button>
+      </block>
+    </view>
+    
+    <view class="interaction-hint" wx:if="{{userImage}}">
+      <text class="hint-icon">💡</text>
+      <text>预览效果仅供参考，生成后更清晰</text>
+    </view>
+  </view>
+
+  <!-- 水印设置区域 -->
+  <view class="settings-section">
+    <!-- 模板选择 -->
+    <view class="setting-group">
+      <view class="setting-label">选择水印模板</view>
+      <scroll-view scroll-x class="template-list" enable-flex>
+        <view 
+          wx:for="{{templates}}" 
+          wx:key="id" 
+          class="template-item {{selectedTemplateId === item.id ? 'active' : ''}}"
+          bindtap="selectTemplate"
+          data-id="{{item.id}}"
+        >
+          <text class="template-name">{{item.name}}</text>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 自定义输入 -->
+    <view class="setting-group" wx:if="{{showCustomInput}}">
+      <view class="setting-label">自定义水印文字</view>
+      <input 
+        class="custom-input" 
+        type="text" 
+        placeholder="请输入水印文字，如：仅供XX银行使用"
+        value="{{customText}}"
+        bindinput="onCustomInput"
+        maxlength="30"
+      />
+    </view>
+
+    <!-- 透明度调节 -->
+    <view class="setting-group">
+      <view class="setting-label">水印透明度</view>
+      <slider
+        class="opacity-slider"
+        min="10"
+        max="50"
+        value="{{watermarkOpacity * 100}}"
+        show-value
+        bindchange="onOpacityChange"
+        bindchanging="onOpacityChange"
+      />
+    </view>
+
+    <!-- 字体大小调节 -->
+    <view class="setting-group">
+      <view class="setting-label">字体大小</view>
+      <slider
+        class="font-size-slider"
+        min="10"
+        max="80"
+        value="{{watermarkSize}}"
+        show-value
+        bindchange="onFontSizeChange"
+        bindchanging="onFontSizeChange"
+      />
+    </view>
+
+    <!-- 密度调节 -->
+    <view class="setting-group">
+      <view class="setting-label">水印密度</view>
+      <view class="density-options">
+        <view class="density-option {{watermarkDensity === 'low' ? 'active' : ''}}" bindtap="onDensityChange" data-value="0">稀疏</view>
+        <view class="density-option {{watermarkDensity === 'medium' ? 'active' : ''}}" bindtap="onDensityChange" data-value="1">适中</view>
+        <view class="density-option {{watermarkDensity === 'high' ? 'active' : ''}}" bindtap="onDensityChange" data-value="2">密集</view>
+      </view>
+    </view>
+
+    <!-- 位置选择 -->
+    <view class="setting-group">
+      <view class="setting-label">水印位置</view>
+      <view class="position-options">
+        <view 
+          wx:for="{{positionOptions}}" 
+          wx:key="id"
+          class="position-option {{watermarkPosition === item.id ? 'active' : ''}}"
+          bindtap="onPositionChange"
+          data-id="{{item.id}}"
+        >
+          <text class="position-name">{{item.name}}</text>
+          <text class="position-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 颜色选择 -->
+    <view class="setting-group">
+      <view class="setting-label">水印颜色</view>
+      <view class="color-options">
+        <view 
+          wx:for="{{colorOptions}}" 
+          wx:key="id"
+          class="color-option {{watermarkColor === item.color ? 'active' : ''}}"
+          bindtap="onColorChange"
+          data-id="{{item.id}}"
+        >
+          <view class="color-circle" style="background-color: {{item.color}};"></view>
+          <text class="color-name">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 使用提示 -->
+    <view class="tips-section">
+      <view class="tips-title">使用提示</view>
+      <view class="tips-list">
+        <text class="tip-item">• 建议上传清晰的证件照片</text>
+        <text class="tip-item">• 水印文字会覆盖整个图片，防止被盗用</text>
+        <text class="tip-item">• 生成后的图片可用于各类业务办理</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="page-footer">
+    <view class="action-buttons-row">
+      <button class="action-btn secondary" bindtap="resetMaking" disabled="{{!userImage}}">
+        重新制作
+      </button>
+      <button class="action-btn primary" bindtap="generateWatermark" disabled="{{!userImage || isGenerating}}">
+        {{isGenerating ? '生成中...' : '生成水印图片'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 隐藏画布用于生成 -->
+  <canvas type="2d" id="watermarkCanvas" class="offscreen-canvas"></canvas>
+
+  <!-- 结果弹窗 -->
+  <view class="result-modal" wx:if="{{resultPath}}">
+    <view class="modal-overlay" bindtap="closeResult"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">生成成功</text>
+        <text class="close-btn" bindtap="closeResult">×</text>
+      </view>
+      <image src="{{resultPath}}" mode="aspectFit" class="result-preview" bindtap="previewResult"></image>
+      <view class="modal-footer">
+        <button class="modal-btn share-btn" bindtap="shareImage">分享给好友</button>
+        <button class="modal-btn save-btn" bindtap="saveImage">保存到相册</button>
+      </view>
+    </view>
+  </view>
+</view>

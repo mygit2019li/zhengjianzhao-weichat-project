@@ -1,0 +1,211 @@
+<view class="page">
+  <view class="top-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="top-inner">
+      <view class="back-btn" bindtap="goBack">返回</view>
+      <view class="title">图片加水印</view>
+      <view class="right-gap"></view>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{navHeight}}px;">
+    <view class="preview-shell">
+      <view id="previewBox" class="preview-box" bindtap="onPreviewTap">
+        <image wx:if="{{baseImage}}" src="{{baseImage}}" class="base-image" mode="aspectFit"></image>
+
+        <view class="layer-list">
+          <view
+            wx:for="{{layers}}"
+            wx:key="id"
+            class="layer-item {{activeLayerId === item.id && item.type === 'text' ? 'text-active' : ''}} {{activeLayerId === item.id && item.type === 'image' ? 'image-active' : ''}}"
+            data-id="{{item.id}}"
+            style="left: {{item.x}}px; top: {{item.y}}px; width: {{item.w}}px; height: {{item.h}}px; transform: rotate({{item.rotation || 0}}deg);"
+            catchtouchstart="onLayerTouchStart"
+            catchtouchmove="onLayerTouchMove"
+            catchtouchend="onLayerTouchEnd"
+            catchtap="onLayerTap"
+          >
+            <image wx:if="{{item.type === 'image'}}" class="layer-image" src="{{item.src}}" mode="aspectFit"></image>
+            <text
+              wx:else
+              class="layer-text"
+              style="line-height: 1.12; font-size: {{item.fontSize}}px; color: {{item.colorRgba}}; font-weight: {{item.bold ? '700' : '200'}};"
+            >
+              <block wx:for="{{item.lines || [item.text]}}" wx:key="*this">
+                <text class="layer-text-line">{{item}}</text>
+              </block>
+            </text>
+            <view
+              wx:if="{{activeLayerId === item.id && (item.type === 'text' || item.type === 'image')}}"
+              class="text-resize-handle"
+              data-id="{{item.id}}"
+              catchtouchstart="onResizeHandleStart"
+              catchtouchmove="onResizeHandleMove"
+              catchtouchend="onResizeHandleEnd"
+              catchtouchcancel="onResizeHandleEnd"
+            ></view>
+            <view
+              wx:if="{{activeLayerId === item.id && item.type === 'text'}}"
+              class="text-delete-btn"
+              data-id="{{item.id}}"
+              catchtouchstart="onDeleteLayerTap"
+              catchtouchmove="noop"
+              catchtouchend="noop"
+              catchtap="onDeleteLayerTap"
+            >×</view>
+          </view>
+        </view>
+
+        <view wx:if="{{watermarkPreview.enabled}}" class="watermark-layer">
+          <view
+            wx:for="{{watermarkPreviewItems}}"
+            wx:key="idx"
+            class="watermark-item"
+            style="left: {{item.x}}px; top: {{item.y}}px; font-size: {{watermarkPreview.size}}px; font-weight: {{watermarkPreview.bold ? '700' : '300'}}; color: {{watermarkPreview.colorRgba}}; transform: translate(-50%, -50%) rotate({{watermarkPreview.angle}}deg);"
+          >
+            {{watermarkPreview.text}}
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="tip-text">拖动贴图/文字可移动；双击文字可编辑</view>
+  </view>
+
+  <view class="bottom-bar">
+    <view class="tool-group">
+      <view class="action-item" bindtap="onAddSticker">
+        <view class="action-icon-wrap">
+          <image src="/images/icon/add-image.svg" class="action-icon" mode="aspectFit"></image>
+        </view>
+        <text class="action-text">贴图</text>
+      </view>
+      <view class="action-item" bindtap="onAddText">
+        <view class="action-icon-wrap">
+          <image src="/images/icon/加字.svg" class="action-icon" mode="aspectFit"></image>
+        </view>
+        <text class="action-text">加字</text>
+      </view>
+      <view class="action-item" bindtap="onOpenWatermarkPanel">
+        <view class="action-icon-wrap">
+          <image src="/images/icon/编辑.svg" class="action-icon" mode="aspectFit"></image>
+        </view>
+        <text class="action-text">水印</text>
+      </view>
+      <view class="action-item {{activeLayerId ? '' : 'action-item-disabled'}}" bindtap="onDeleteActiveLayer">
+        <view class="action-icon-wrap">
+          <image src="/images/icon/编辑.svg" class="action-icon" mode="aspectFit"></image>
+        </view>
+        <text class="action-text">删除</text>
+      </view>
+    </view>
+    <view class="save-btn" bindtap="onSave">
+      <text>保存</text>
+    </view>
+  </view>
+
+  <view wx:if="{{showTextPanel}}" class="panel-mask" bindtap="closeTextPanel"></view>
+  <view wx:if="{{showTextPanel}}" class="setting-panel" catchtap="noop">
+    <view class="panel-head">
+      <view class="panel-close" bindtap="closeTextPanel">关闭</view>
+      <input class="panel-input" placeholder="这里输入文字" value="{{textEditor.text}}" focus="{{showTextPanel}}" bindinput="onTextInput" />
+    </view>
+    <view class="panel-row">
+      <view class="row-label">文字颜色</view>
+      <view class="color-list">
+        <view
+          wx:for="{{colorOptions}}"
+          wx:key="value"
+          class="color-dot {{textEditor.color === item.value ? 'active' : ''}}"
+          style="background: {{item.value}}"
+          data-color="{{item.value}}"
+          bindtap="onTextColorPick"
+        ></view>
+      </view>
+    </view>
+    <view class="panel-row slider-row">
+      <text class="slider-label">大小</text>
+      <slider min="20" max="96" value="{{textEditor.size}}" show-value bindchange="onTextSizeChange" bindchanging="onTextSizeChange" />
+    </view>
+    <view class="panel-row slider-row">
+      <text class="slider-label">透明度</text>
+      <slider min="10" max="100" value="{{textEditor.opacity}}" show-value bindchange="onTextOpacityChange" bindchanging="onTextOpacityChange" />
+    </view>
+    <view class="panel-row">
+      <text class="slider-label">加粗</text>
+      <switch checked="{{textEditor.bold}}" bindchange="onTextBoldChange" />
+    </view>
+  </view>
+
+  <view wx:if="{{showWatermarkPanel}}" class="panel-mask" bindtap="closeWatermarkPanel"></view>
+  <view wx:if="{{showWatermarkPanel}}" class="setting-panel wm-panel" catchtap="noop">
+    <view class="panel-head">
+      <view class="panel-close" bindtap="closeWatermarkPanel">关闭</view>
+      <input class="panel-input" placeholder="这里输入水印文字" value="{{watermarkDraft.text}}" bindinput="onWatermarkTextInput" />
+    </view>
+
+    <view class="wm-enable-row">
+      <text class="wm-enable-label">启用水印</text>
+      <switch checked="{{watermarkDraft.enabled}}" bindchange="onWatermarkEnableChange" />
+    </view>
+
+    <view class="wm-tabs">
+      <view class="wm-tab {{wmActiveTab === 'basic' ? 'active' : ''}}" data-tab="basic" bindtap="onSwitchWmTab">基础</view>
+      <view class="wm-tab {{wmActiveTab === 'color' ? 'active' : ''}}" data-tab="color" bindtap="onSwitchWmTab">颜色</view>
+      <view class="wm-tab {{wmActiveTab === 'size' ? 'active' : ''}}" data-tab="size" bindtap="onSwitchWmTab">大小</view>
+    </view>
+
+    <view wx:if="{{wmActiveTab === 'basic'}}" class="wm-tab-panel">
+      <view class="panel-row wm-row">
+        <text class="slider-label">位置</text>
+        <picker mode="selector" range="{{watermarkPositions}}" range-key="label" value="{{watermarkDraft.positionIndex}}" bindchange="onWatermarkPositionChange">
+          <view class="picker-view">{{watermarkPositionLabel}}</view>
+        </picker>
+      </view>
+      <view class="panel-row slider-row wm-row">
+        <text class="slider-label">角度</text>
+        <slider min="-90" max="90" value="{{watermarkDraft.angle}}" show-value bindchange="onWatermarkAngleChange" bindchanging="onWatermarkAngleChange" />
+      </view>
+      <view class="panel-row slider-row wm-row">
+        <text class="slider-label">间隔</text>
+        <slider min="5" max="220" value="{{watermarkDraft.spacing}}" show-value bindchange="onWatermarkSpacingChange" bindchanging="onWatermarkSpacingChange" />
+      </view>
+    </view>
+
+    <view wx:if="{{wmActiveTab === 'color'}}" class="wm-tab-panel">
+      <view class="panel-row wm-row">
+        <view class="row-label">颜色</view>
+        <view class="color-list wm-color-list">
+          <view
+            wx:for="{{colorOptions}}"
+            wx:key="value"
+            class="color-dot wm-color-dot {{watermarkDraft.color === item.value ? 'active' : ''}}"
+            style="background: {{item.value}}"
+            data-color="{{item.value}}"
+            bindtap="onWatermarkColorPick"
+          ></view>
+        </view>
+      </view>
+      <view class="panel-row slider-row wm-row">
+        <text class="slider-label">透明度</text>
+        <slider min="5" max="100" value="{{watermarkDraft.opacity}}" show-value bindchange="onWatermarkOpacityChange" bindchanging="onWatermarkOpacityChange" />
+      </view>
+    </view>
+
+    <view wx:if="{{wmActiveTab === 'size'}}" class="wm-tab-panel">
+      <view class="panel-row wm-row">
+        <text class="slider-label">加粗</text>
+        <switch checked="{{watermarkDraft.bold}}" bindchange="onWatermarkBoldChange" />
+      </view>
+      <view class="panel-row slider-row wm-row">
+        <text class="slider-label">大小</text>
+        <slider min="8" max="72" value="{{watermarkDraft.size}}" show-value bindchange="onWatermarkSizeChange" bindchanging="onWatermarkSizeChange" />
+      </view>
+    </view>
+  </view>
+
+  <canvas
+    type="2d"
+    canvas-id="editCanvas"
+    class="render-canvas"
+    style="width: {{renderWidth}}px; height: {{renderHeight}}px;"
+  ></canvas>
+</view>
