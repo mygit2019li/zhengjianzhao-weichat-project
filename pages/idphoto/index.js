@@ -1,6 +1,7 @@
 const Security = require('../../utils/security.js');
 const { checkImageSize } = require('../../utils/util.js');
 const NSFW = require('../../utils/nsfw.js');
+const ContentSecurity = require('../../utils/content-security.js');
 const { ID_PHOTO_COLORS, compositeBackground, base64ToTempFile } = require('../../utils/image-processor.js');
 
 Page({
@@ -1893,6 +1894,21 @@ Page({
 
   // 保存图片到相册（主功能入口）
   saveImage: function () {
+    // 内容安全：若启用了水印，保存前先检测水印文字
+    const wm = this.data.watermarkParams || this.data.makeWatermarkParams || {};
+    const wmEnabled = this.data.watermarkEnabled || this.data.makeWatermarkEnabled;
+    const wmText = wm.text;
+    if (wmEnabled && wmText && String(wmText).trim()) {
+      ContentSecurity.checkTextAndAlert(wmText).then((passed) => {
+        if (passed) this.proceedSaveImage();
+      });
+      return;
+    }
+
+    this.proceedSaveImage();
+  },
+
+  proceedSaveImage: function () {
     const currentModule = this.data.currentModule;
     if (currentModule === 'make' && this.videoAd) {
       this.pendingSaveToAlbum = true;

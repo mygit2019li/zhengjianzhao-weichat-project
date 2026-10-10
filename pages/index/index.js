@@ -1,6 +1,8 @@
 // 首页逻辑
 const { request, BASE_URL } = require('../../utils/request');
 const { checkImageSize } = require('../../utils/util.js');
+const NSFW = require('../../utils/nsfw.js');
+const Privacy = require('../../utils/privacy.js');
 
 Page({
   data: {
@@ -127,12 +129,18 @@ Page({
       count: count,
       sizeType: ['original', 'compressed'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
+      success: async (res) => {
         if (!checkImageSize(res.tempFiles)) return;
-        
+
+        const isSafe = await NSFW.checkImagesAndAlert(res.tempFilePaths);
+        if (!isSafe) return;
+
         const newImages = [...this.data.puzzleImages, ...res.tempFilePaths];
         this.setData({ puzzleImages: newImages });
         this.updateTemplates(newImages.length);
+      },
+      fail: (err) => {
+        Privacy.handlePrivacyError(err);
       }
     });
   },
@@ -386,7 +394,7 @@ Page({
     wx.chooseMessageFile({
       count: 9,
       type: 'image',
-      success: (res) => {
+      success: async (res) => {
         const tempFilePaths = (res.tempFiles || [])
           .map(file => file.path)
           .filter(Boolean);
@@ -394,9 +402,14 @@ Page({
           wx.showToast({ title: '未选择图片', icon: 'none' });
           return;
         }
+
+        const isSafe = await NSFW.checkImagesAndAlert(tempFilePaths);
+        if (!isSafe) return;
+
         this.navigateToPuzzle(tempFilePaths);
       },
       fail: (err) => {
+        if (Privacy.handlePrivacyError(err)) return;
         if (err && err.errMsg && err.errMsg.includes('cancel')) {
           return;
         }
@@ -411,8 +424,13 @@ Page({
       count: 9,
       sizeType: ['original', 'compressed'],
       sourceType: sourceType,
-      success: (res) => {
+      success: async (res) => {
+        const isSafe = await NSFW.checkImagesAndAlert(res.tempFilePaths);
+        if (!isSafe) return;
         this.navigateToPuzzle(res.tempFilePaths);
+      },
+      fail: (err) => {
+        Privacy.handlePrivacyError(err);
       }
     });
   },
@@ -424,7 +442,8 @@ Page({
       url: '/pages/pintu/index',
       success: (res) => {
         res.eventChannel.emit('acceptDataFromOpenerPage', {
-          images: tempFilePaths
+          images: tempFilePaths,
+          prechecked: true
         });
       }
     });
@@ -453,13 +472,18 @@ Page({
       count: 1,
       sizeType: ['original', 'compressed'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
+      success: async (res) => {
         if (!checkImageSize(res.tempFiles || [])) return;
         const imagePath = (res.tempFilePaths || [])[0];
         if (!imagePath) return;
+        const isSafe = await NSFW.checkAndAlert(imagePath, true);
+        if (!isSafe) return;
         wx.navigateTo({
           url: `/pages/image-edit/index?image=${encodeURIComponent(imagePath)}`
         });
+      },
+      fail: (err) => {
+        Privacy.handlePrivacyError(err);
       }
     });
   },
@@ -516,10 +540,15 @@ Page({
       count: 1,
       sizeType: ['original', 'compressed'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
+      success: async (res) => {
+        const isSafe = await NSFW.checkImagesAndAlert(res.tempFilePaths);
+        if (!isSafe) return;
         this.setData({
           quickCutImages: res.tempFilePaths
         });
+      },
+      fail: (err) => {
+        Privacy.handlePrivacyError(err);
       }
     });
   },

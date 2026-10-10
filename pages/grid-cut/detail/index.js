@@ -1,3 +1,5 @@
+const NSFW = require('../../../utils/nsfw.js');
+
 Page({
   data: {
     title: '切多宫格图结果',
@@ -245,8 +247,10 @@ Page({
       count: 1,
       sizeType: ['original', 'compressed'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
+      success: async (res) => {
         const tempFilePath = res.tempFilePaths[0];
+        const isSafe = await NSFW.checkAndAlert(tempFilePath, true);
+        if (!isSafe) return;
         this.setData({
           [`items[${index}].path`]: tempFilePath,
           [`items[${index}].rotate`]: 0,

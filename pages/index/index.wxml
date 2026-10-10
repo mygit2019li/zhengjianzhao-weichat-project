@@ -185,4 +185,7 @@
       </view>
     </view>
   </view>
+
+  <!-- 隐私协议授权弹窗（未同步时自动弹出） -->
+  <privacy-popup />
 </view>

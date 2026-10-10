@@ -1,3 +1,5 @@
+const NSFW = require('../../utils/nsfw.js');
+const ContentSecurity = require('../../utils/content-security.js');
 const { getTemplateId, getTemplateOptions } = require('./templates.js');
 const { buildPuzzleRenderModel } = require('../../utils/puzzle/render-model.js');
 const { calculateLayoutGeometry: buildLayoutGeometry } = require('../../utils/puzzle/layout.js');
@@ -125,9 +127,14 @@ Page({
     // 接收从主页传递过来的图片数据
     const eventChannel = this.getOpenerEventChannel();
     if (eventChannel) {
-      eventChannel.on('acceptDataFromOpenerPage', (data) => {
+      eventChannel.on('acceptDataFromOpenerPage', async (data) => {
         console.log('接收到主页传递的图片数据:', data);
         if (data && data.images && data.images.length > 0) {
+          // 直接传入的图片：若上游未标记已检测，则在此补做内容安全检测
+          if (!data.prechecked) {
+            const isSafe = await NSFW.checkImagesAndAlert(data.images);
+            if (!isSafe) return;
+          }
           // 将传递的图片添加到 images 和 imageInfos 中
           const newImages = data.images;
           const newImageInfos = data.images.map((src, index) => ({
@@ -282,8 +289,10 @@ Page({
       count: 9 - this.data.images.length,
       mediaType: ['image'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
+      success: async (res) => {
         const newImages = res.tempFiles.map(file => file.tempFilePath);
+        const isSafe = await NSFW.checkImagesAndAlert(newImages);
+        if (!isSafe) return;
         this.addImages(newImages);
       }
     });
@@ -656,9 +665,12 @@ Page({
       count: 1,
       mediaType: ['image'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
+      success: async (res) => {
         const src = res.tempFiles[0].tempFilePath;
-        
+
+        const isSafe = await NSFW.checkAndAlert(src, true);
+        if (!isSafe) return;
+
         wx.getImageInfo({
           src,
           success: (info) => {
@@ -1543,6 +1555,22 @@ Page({
       return;
     }
 
+    this.saveWithContentCheck();
+  },
+
+  // 保存前先做文字内容安全检测
+  async saveWithContentCheck() {
+    const textList = (this.data.texts || [])
+      .filter((item) => item && item.content)
+      .map((item) => item.content);
+
+    const textPassed = await ContentSecurity.checkTextsAndAlert(textList);
+    if (!textPassed) return;
+
+    this.doSave();
+  },
+
+  doSave() {
     wx.showLoading({ title: '生成中...' });
     
     // 使用 canvas 绘制最终图片

@@ -1,3 +1,6 @@
+const NSFW = require('../../utils/nsfw.js');
+const ContentSecurity = require('../../utils/content-security.js');
+
 const DEFAULT_RENDER_WIDTH = 1080;
 const DEFAULT_RENDER_HEIGHT = 1440;
 
@@ -120,9 +123,12 @@ Page({
       count: 1,
       sizeType: ['original', 'compressed'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
+      success: async (res) => {
         const paths = res.tempFilePaths || [];
-        if (paths[0]) this.setBaseImage(paths[0]);
+        if (!paths[0]) return;
+        const isSafe = await NSFW.checkAndAlert(paths[0], true);
+        if (!isSafe) return;
+        this.setBaseImage(paths[0]);
       },
       fail: (err) => {
         if (!backIfCancel) return;
@@ -153,9 +159,11 @@ Page({
       count: 1,
       sizeType: ['original', 'compressed'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
+      success: async (res) => {
         const path = (res.tempFilePaths || [])[0];
         if (!path) return;
+        const isSafe = await NSFW.checkAndAlert(path, true);
+        if (!isSafe) return;
         const layer = this.createStickerLayer(path);
         this.setData({
           layers: [...this.data.layers, layer],
@@ -831,6 +839,18 @@ Page({
       wx.showToast({ title: '请先选择图片', icon: 'none' });
       return;
     }
+
+    // 内容安全：保存前检测所有用户输入文字（文字图层 + 水印文字）
+    const textList = (this.data.layers || [])
+      .filter((layer) => layer && layer.type === 'text' && layer.text)
+      .map((layer) => layer.text);
+    const wm = this.data.watermark;
+    if (wm && wm.enabled && wm.text) {
+      textList.push(wm.text);
+    }
+    const textPassed = await ContentSecurity.checkTextsAndAlert(textList);
+    if (!textPassed) return;
+
     wx.showLoading({ title: '正在保存...' });
     try {
       await this.ensureAlbumPermission();

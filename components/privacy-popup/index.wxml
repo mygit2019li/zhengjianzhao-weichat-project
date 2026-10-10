@@ -1,0 +1,21 @@
+<view class="privacy-mask" wx:if="{{visible}}" catchtouchmove="noop">
+  <view class="privacy-dialog">
+    <view class="privacy-title">用户隐私保护提示</view>
+
+    <view class="privacy-body">
+      <text class="privacy-text">感谢你使用证件照助手。为向你提供图片处理服务，我们会在你主动选择时读取你挑选的照片、在你确认后写入相册。请阅读并同意</text>
+      <text class="privacy-link" bindtap="openContract">{{contractName}}</text>
+      <text class="privacy-text">后继续使用。</text>
+    </view>
+
+    <view class="privacy-actions">
+      <view class="privacy-btn privacy-btn-reject" bindtap="onReject">暂不同意</view>
+      <button
+        id="agree-btn"
+        class="privacy-btn privacy-btn-agree"
+        open-type="agreePrivacyAuthorization"
+        bindagreeprivacyauthorization="onAgree"
+      >同意</button>
+    </view>
+  </view>
+</view>

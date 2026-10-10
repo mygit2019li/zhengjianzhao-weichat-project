@@ -1,4 +1,5 @@
 const Security = require('../../utils/security.js');
+const NSFW = require('../../utils/nsfw.js');
 const { checkImageSize } = require('../../utils/util.js');
 const { ID_PHOTO_COLORS, compositeBackground, base64ToTempFile } = require('../../utils/image-processor.js');
 
@@ -51,10 +52,13 @@ Page({
 
   onLoad(options) {
     if (options.imagePath) {
-      this.setData({
-        imagePath: options.imagePath
+      NSFW.checkAndAlert(options.imagePath, true).then((isSafe) => {
+        if (!isSafe) return;
+        this.setData({
+          imagePath: options.imagePath
+        });
+        this.processImage(options.imagePath);
       });
-      this.processImage(options.imagePath);
     }
   },
 
@@ -63,11 +67,14 @@ Page({
       count: 1,
       sizeType: ['original', 'compressed'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
+      success: async (res) => {
         const tempFiles = res.tempFiles;
         if (!checkImageSize(tempFiles)) return;
 
         const tempFilePath = res.tempFilePaths[0];
+        const isSafe = await NSFW.checkAndAlert(tempFilePath, true);
+        if (!isSafe) return;
+
         this.setData({
           imagePath: tempFilePath
         });
@@ -155,11 +162,14 @@ Page({
       count: 1,
       sizeType: ['original', 'compressed'],
       sourceType: ['album'],
-      success: (res) => {
+      success: async (res) => {
         if (!checkImageSize(res.tempFiles)) return;
+        const bgPath = res.tempFilePaths[0];
+        const isSafe = await NSFW.checkAndAlert(bgPath, true);
+        if (!isSafe) return;
         this.setData({
           bgType: 'image',
-          backgroundImage: res.tempFilePaths[0],
+          backgroundImage: bgPath,
           backgroundColor: ''
         });
         this.updateResult();

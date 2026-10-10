@@ -1,5 +1,6 @@
 const { checkImageSize } = require('../../utils/util.js');
 const NSFW = require('../../utils/nsfw.js');
+const ContentSecurity = require('../../utils/content-security.js');
 
 Page({
     data: {
@@ -309,6 +310,17 @@ Page({
         }
         this.setData({ isGenerating: true });
         wx.showLoading({ title: '生成中...' });
+
+        // 内容安全：生成前检测所有可见文字
+        const textList = (this.data.textElements || [])
+            .filter((el) => el && el.visible !== false && el.text)
+            .map((el) => el.text);
+        const textPassed = await ContentSecurity.checkTextsAndAlert(textList);
+        if (!textPassed) {
+            this.setData({ isGenerating: false });
+            wx.hideLoading();
+            return;
+        }
 
         try {
             // 确保全量字体已就绪

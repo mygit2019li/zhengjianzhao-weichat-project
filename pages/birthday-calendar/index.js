@@ -1,3 +1,5 @@
+const NSFW = require('../../utils/nsfw.js');
+
 function formatDate(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -137,7 +139,16 @@ function chooseImageAsync() {
       count: 1,
       sizeType: ['compressed'],
       sourceType: ['album', 'camera'],
-      success: resolve,
+      success: async (res) => {
+        // 先做内容安全检测，不合规则中断（不提示，检测函数内部已提示）
+        const src = (res.tempFilePaths || [])[0];
+        const isSafe = await NSFW.checkAndAlert(src, true);
+        if (!isSafe) {
+          reject(new Error('image-rejected'));
+          return;
+        }
+        resolve(res);
+      },
       fail: reject
     });
   });

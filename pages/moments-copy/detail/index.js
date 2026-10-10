@@ -1,3 +1,5 @@
+const NSFW = require('../../../utils/nsfw.js');
+
 Page({
     data: {
         copyText: '',
@@ -75,8 +77,10 @@ Page({
             count: 1,
             sizeType: ['original', 'compressed'],
             sourceType: ['album', 'camera'],
-            success: (res) => {
+            success: async (res) => {
                 const tempFilePath = res.tempFilePaths[0];
+                const isSafe = await NSFW.checkAndAlert(tempFilePath, true);
+                if (!isSafe) return;
                 const images = this.data.images;
                 images[index] = tempFilePath;
                 this.setData({ images });

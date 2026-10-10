@@ -1,5 +1,6 @@
 const { checkImageSize } = require('../../utils/util.js');
 const NSFW = require('../../utils/nsfw.js');
+const ContentSecurity = require('../../utils/content-security.js');
 
 Page({
   data: {
@@ -152,7 +153,6 @@ Page({
 
   // 图片鉴黄检测
   checkImageNSFW: async function (filePath) {
-    return true
     try {
       const isSafe = await NSFW.checkAndAlert(filePath, true);
       return isSafe;
@@ -350,6 +350,10 @@ Page({
       wx.showToast({ title: '请输入水印文字', icon: 'none' });
       return;
     }
+
+    // 内容安全：检测水印文字
+    const textPassed = await ContentSecurity.checkTextAndAlert(text);
+    if (!textPassed) return;
 
     this.setData({ isGenerating: true });
     wx.showLoading({ title: '生成中...' });

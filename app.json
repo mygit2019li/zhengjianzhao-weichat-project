@@ -71,5 +71,9 @@
     ]
   },
   "style": "v2",
-  "sitemapLocation": "sitemap.json"
+  "sitemapLocation": "sitemap.json",
+  "__usePrivacyCheck__": true,
+  "usingComponents": {
+    "privacy-popup": "/components/privacy-popup/index"
+  }
 }

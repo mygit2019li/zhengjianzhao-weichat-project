@@ -1,4 +1,5 @@
 const { checkImageSize } = require('../../utils/util.js');
+const NSFW = require('../../utils/nsfw.js');
 
 Page({
   data: {
@@ -10,7 +11,10 @@ Page({
 
   onLoad(options) {
     if (options.imagePath) {
-      this.initImage(options.imagePath);
+      const incomingPath = options.imagePath;
+      NSFW.checkAndAlert(incomingPath, true).then((isSafe) => {
+        if (isSafe) this.initImage(incomingPath);
+      });
     }
   },
 
@@ -19,9 +23,11 @@ Page({
       count: 20,
       sizeType: ['original', 'compressed'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
+      success: async (res) => {
         if (!checkImageSize(res.tempFiles)) return;
         const selectedPaths = (res.tempFilePaths || []).slice(0, 20);
+        const isSafe = await NSFW.checkImagesAndAlert(selectedPaths);
+        if (!isSafe) return;
         this.initImages(selectedPaths);
       }
     });

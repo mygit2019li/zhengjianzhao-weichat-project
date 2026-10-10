@@ -1,3 +1,5 @@
+const Auth = require('./utils/auth.js');
+
 App({
   onLaunch: function () {
     var t = this;
@@ -8,6 +10,12 @@ App({
         e ? (t.globalData.Custom = e, t.globalData.CustomBar = e.bottom + e.top - a.statusBarHeight) : t.globalData.CustomBar = a.statusBarHeight + 50;
       }
     });
+
+    // 静默登录：启动即预取 openid（供内容安全检测 msgSecCheck 使用）
+    // 无感、不阻塞启动、失败静默 —— 后续调用 Auth.ensureOpenid() 时会自动重试
+    setTimeout(function () {
+      Auth.silentLogin();
+    }, 0);
   },
   loadGlobalFonts: function (options = {}) {
     const { useLite = false } = options;

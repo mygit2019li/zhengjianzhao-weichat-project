@@ -85,7 +85,25 @@ const NSFW = {
   },
 
   /**
-   * 检测图片并显示结果
+   * 批量检测多张图片并显示结果
+   * 任一张不安全或检测失败即返回 false
+   * @param {string[]} filePaths - 图片临时文件路径数组
+   * @returns {Promise<boolean>} - 全部图片是否安全
+   */
+  checkImagesAndAlert: async function (filePaths) {
+    const paths = (filePaths || []).filter(Boolean);
+    if (!paths.length) return true;
+
+    // 逐张检测：串行避免并发过高，且能准确定位不合规图片
+    for (let i = 0; i < paths.length; i++) {
+      const isSafe = await this.checkAndAlert(paths[i], true);
+      if (!isSafe) return false;
+    }
+    return true;
+  },
+
+  /**
+   * 批量检测并显示结果
    * 如果图片不安全，会显示提示并返回 false
    * @param {string} imageBase64OrPath - 图片 Base64 编码或临时文件路径
    * @param {boolean} isFilePath - 是否是文件路径

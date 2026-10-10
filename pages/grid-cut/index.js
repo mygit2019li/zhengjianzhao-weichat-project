@@ -82,7 +82,11 @@ Page({
         });
 
         if (options.imagePath) {
-            this.initCropArea(decodeURIComponent(options.imagePath));
+            // 从首页快速切图传入的图片：先做内容安全检测
+            const incomingPath = decodeURIComponent(options.imagePath);
+            NSFW.checkAndAlert(incomingPath, true).then((isSafe) => {
+                this.initCropArea(isSafe ? incomingPath : '/images/grid_default.png');
+            });
         } else {
             this.initCropArea('/images/grid_default.png');
         }

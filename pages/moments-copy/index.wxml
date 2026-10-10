@@ -224,4 +224,7 @@
 
   <!-- Hidden Canvas for Image Generation -->
   <canvas canvas-id="gridCanvas" style="width: 2000px; height: 2000px; position: fixed; left: -9999px; top: -9999px;"></canvas>
+
+  <!-- 隐私协议授权弹窗（未同步时自动弹出） -->
+  <privacy-popup />
 </view>

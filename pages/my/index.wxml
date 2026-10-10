@@ -104,4 +104,7 @@
   <view class="version">
     <text class="version-text">版本 1.0.0</text>
   </view>
+
+  <!-- 隐私协议授权弹窗（未同步时自动弹出） -->
+  <privacy-popup />
 </view>

@@ -84,7 +84,10 @@ Page({
         });
 
         if (options.imagePath) {
-            this.initCropArea(decodeURIComponent(options.imagePath));
+            const incomingPath = decodeURIComponent(options.imagePath);
+            NSFW.checkAndAlert(incomingPath, true).then((isSafe) => {
+                if (isSafe) this.initCropArea(incomingPath);
+            });
         } else {
             this.initCropArea('/images/grid_default.png');
         }

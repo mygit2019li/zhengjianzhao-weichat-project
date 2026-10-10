@@ -1,4 +1,5 @@
 const { checkImageSize } = require('../../utils/util.js');
+const NSFW = require('../../utils/nsfw.js');
 
 Page({
   data: {
@@ -44,8 +45,12 @@ Page({
 
   onLoad(options) {
     if (options.imagePath) {
-      this.setData({ hasStarted: true });
-      this.initImage(options.imagePath);
+      const incomingPath = options.imagePath;
+      NSFW.checkAndAlert(incomingPath, true).then((isSafe) => {
+        if (!isSafe) return;
+        this.setData({ hasStarted: true });
+        this.initImage(incomingPath);
+      });
     } else {
       // Auto open chooser if no image
       // this.uploadImage(); 
@@ -62,8 +67,10 @@ Page({
       count: 1,
       sizeType: ['original'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
+      success: async (res) => {
         if (!checkImageSize(res.tempFiles)) return;
+        const isSafe = await NSFW.checkAndAlert(res.tempFilePaths[0], true);
+        if (!isSafe) return;
         this.initImage(res.tempFilePaths[0]);
       }
     });

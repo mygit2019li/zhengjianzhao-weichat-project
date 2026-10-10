@@ -1,4 +1,5 @@
 // pages/compress/index.js
+const NSFW = require('../../utils/nsfw.js');
 const MAX_CANVAS_DIM = 4096;
 
 Page({
@@ -21,7 +22,9 @@ Page({
 
   onLoad(options) {
     if (options.imagePath) {
-      this.addImages([options.imagePath]);
+      NSFW.checkAndAlert(options.imagePath, true).then((isSafe) => {
+        if (isSafe) this.addImages([options.imagePath]);
+      });
     }
   },
 
@@ -150,7 +153,9 @@ Page({
       count: maxCount - currentCount,
       sizeType: ['original'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
+      success: async (res) => {
+        const isSafe = await NSFW.checkImagesAndAlert(res.tempFilePaths);
+        if (!isSafe) return;
         this.addImages(res.tempFilePaths);
       }
     });

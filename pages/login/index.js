@@ -1,3 +1,5 @@
+const Auth = require('../../utils/auth.js');
+
 Page({
   data: {
     userInfo: null
@@ -6,55 +8,52 @@ Page({
   // 微信登录
   wechatLogin: function() {
     const that = this;
-    
-    // 1. 点击登录按钮后立即显示加载状态
+
     wx.showLoading({
       title: '登录中...',
       mask: true
     });
-    
-    // 2. 直接调用getUserProfile获取用户信息（必须在直接点击事件中调用）
+
+    // 1. 先取头像昵称（必须在用户点击事件中同步调用）
     wx.getUserProfile({
       desc: '用于完善会员资料',
       success: function(userRes) {
-        // 3. 获取登录凭证
-        wx.login({
-          success: function(loginRes) {
-            // 4. 保存用户信息到本地
-            wx.setStorageSync('userInfo', userRes.userInfo);
-            wx.setStorageSync('isLogin', true);
-            
-            // 5. 更新页面数据
-            that.setData({
-              userInfo: userRes.userInfo
-            });
-            
-            wx.hideLoading();
-            
-            // 6. 登录成功后直接返回上一页，不显示成功提示
-            wx.navigateBack({
-              delta: 1
-            });
-          },
-          fail: function(loginErr) {
-            wx.hideLoading();
-            console.log('获取登录凭证失败', loginErr);
-            wx.showToast({
-              title: '登录失败',
-              icon: 'none'
-            });
-          }
-        });
+        that.completeLogin(userRes.userInfo);
       },
       fail: function(userErr) {
-        wx.hideLoading();
-        console.log('获取用户信息失败', userErr);
-        wx.showToast({
-          title: '获取用户信息失败',
-          icon: 'none'
-        });
+        // 用户拒绝授权头像昵称：不影响登录，openid 仍可静默获取
+        console.log('用户未授权头像昵称，继续静默登录', userErr);
+        that.completeLogin(null);
       }
     });
+  },
+
+  // 完成登录：静默换取 openid 并落到本地
+  completeLogin: function(userInfo) {
+    const that = this;
+
+    Auth.ensureOpenid(true)
+      .then(function() {
+        if (userInfo) {
+          wx.setStorageSync('userInfo', userInfo);
+        }
+        wx.setStorageSync('isLogin', true);
+
+        that.setData({
+          userInfo: userInfo || that.data.userInfo || null
+        });
+
+        wx.hideLoading();
+        wx.navigateBack({ delta: 1 });
+      })
+      .catch(function(err) {
+        wx.hideLoading();
+        console.log('静默登录失败', err);
+        wx.showToast({
+          title: (err && err.message) || '登录失败，请重试',
+          icon: 'none'
+        });
+      });
   },
 
   // 取消登录

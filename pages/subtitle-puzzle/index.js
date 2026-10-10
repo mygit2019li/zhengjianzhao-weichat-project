@@ -1,4 +1,6 @@
 const { checkImageSize } = require('../../utils/util.js');
+const NSFW = require('../../utils/nsfw.js');
+const ContentSecurity = require('../../utils/content-security.js');
 
 const RANDOM_QUOTES = [
   "生活就像一盒巧克力，你永远不知道下一颗是什么味道。",
@@ -53,8 +55,12 @@ Page({
   onLoad(options) {
     const eventChannel = this.getOpenerEventChannel();
     if (eventChannel && typeof eventChannel.on === 'function') {
-      eventChannel.on('acceptDataFromOpenerPage', (data) => {
+      eventChannel.on('acceptDataFromOpenerPage', async (data) => {
         if (data.images) {
+          if (!data.prechecked) {
+            const isSafe = await NSFW.checkImagesAndAlert(data.images);
+            if (!isSafe) return;
+          }
           this.addImages(data.images);
         }
       });
@@ -67,8 +73,10 @@ Page({
       count: 9,
       sizeType: ['original', 'compressed'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
+      success: async (res) => {
         if (!checkImageSize(res.tempFiles)) return;
+        const isSafe = await NSFW.checkImagesAndAlert(res.tempFilePaths);
+        if (!isSafe) return;
         this.setData({ hasStarted: true });
         this.addImages(res.tempFilePaths);
       }
@@ -80,8 +88,10 @@ Page({
       count: 9,
       sizeType: ['original', 'compressed'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
+      success: async (res) => {
         if (!checkImageSize(res.tempFiles)) return;
+        const isSafe = await NSFW.checkImagesAndAlert(res.tempFilePaths);
+        if (!isSafe) return;
         this.addImages(res.tempFilePaths);
       }
     });
@@ -237,6 +247,8 @@ Page({
       success: async (res) => {
         if (!checkImageSize(res.tempFiles)) return;
         const path = res.tempFilePaths[0];
+        const isSafe = await NSFW.checkAndAlert(path, true);
+        if (!isSafe) return;
         const info = await wx.getImageInfo({ src: path });
         
         this.setData({
@@ -256,6 +268,8 @@ Page({
       success: async (res) => {
         if (!checkImageSize(res.tempFiles)) return;
         const path = res.tempFilePaths[0];
+        const isSafe = await NSFW.checkAndAlert(path, true);
+        if (!isSafe) return;
         const info = await wx.getImageInfo({ src: path });
         
         const newImg = {
@@ -372,11 +386,18 @@ Page({
     });
   },
 
-  generate() {
+  async generate() {
     if (this.data.images.length === 0) {
       wx.showToast({ title: '请先添加图片', icon: 'none' });
       return;
     }
+
+    // 内容安全：生成前检测所有台词文字
+    const textList = (this.data.images || [])
+      .filter((item) => item && item.text)
+      .map((item) => item.text);
+    const textPassed = await ContentSecurity.checkTextsAndAlert(textList);
+    if (!textPassed) return;
 
     this.setData({ generating: true });
     wx.showLoading({ title: '生成中...' });
