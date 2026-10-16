@@ -12,10 +12,17 @@
     <view class="title">证件照</view>
     <view class="subtitle">您身边的证件照管家</view>
 
-    <!-- 已登录且非编辑态：展示资料 -->
-    <block wx:if="{{userInfo && !isEditing}}">
+    <!-- ① 未登录：一键登录（无需填写任何资料） -->
+    <block wx:if="{{!userInfo && !isEditing}}">
+      <view class="quick-login-btn" bindtap="quickLogin">微信一键登录</view>
+      <view class="login-hint">点击即可完成登录，无需填写资料</view>
+    </block>
+
+    <!-- ② 已登录且非编辑态：展示资料 -->
+    <block wx:elif="{{userInfo && !isEditing}}">
       <view class="user-info">
         <image wx:if="{{userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" class="avatar" mode="aspectFill"></image>
+        <image wx:else src="/images/头像.png" class="avatar" mode="aspectFill"></image>
         <view class="user-detail">
           <text class="nickname">{{userInfo.nickName}}</text>
           <text class="tip">已登录</text>
@@ -25,16 +32,23 @@
       <view class="edit-btn" bindtap="startEdit">修改资料</view>
     </block>
 
-    <!-- 未登录 / 编辑态：填写头像昵称 -->
+    <!-- ③ 编辑态：自定义头像昵称（可选路径） -->
     <block wx:else>
-      <!-- 头像选择（微信新接口） -->
+      <!-- 头像选择（微信新接口 chooseAvatar） -->
+      <!-- 注意：button 本身保持默认 display:block，flex 居中交给内层 view，
+           规避 open-type 在部分基础库下与自定义 display 冲突而点击无响应 -->
       <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-        <image wx:if="{{avatarUrl}}" src="{{avatarUrl}}" class="avatar-preview" mode="aspectFill"></image>
-        <view wx:else class="avatar-placeholder">
-          <text class="avatar-plus">+</text>
-          <text class="avatar-tip">点击选择头像</text>
+        <view class="avatar-picker-inner">
+          <image wx:if="{{avatarUrl}}" src="{{avatarUrl}}" class="avatar-preview" mode="aspectFill"></image>
+          <view wx:else class="avatar-placeholder">
+            <text class="avatar-plus">+</text>
+            <text class="avatar-tip">点击选择头像</text>
+          </view>
         </view>
       </button>
+
+      <!-- 备用入口：开发者工具不支持 chooseAvatar，微信头像能力被禁用时也可走这里 -->
+      <view class="avatar-fallback" bindtap="chooseAvatarFromAlbum">从相册选择</view>
 
       <!-- 昵称输入（微信昵称填写能力） -->
       <input
@@ -48,7 +62,7 @@
         bindnickname="onNicknameChange"
       />
 
-      <view class="login-btn" bindtap="completeLogin">完成</view>
+      <view class="login-btn" bindtap="completeLogin">保存</view>
       <view class="cancel-btn" bindtap="cancelLogin">取消</view>
     </block>
   </view>
