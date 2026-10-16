@@ -6,30 +6,51 @@
     <view class="circle circle-3"></view>
     <view class="circle circle-4"></view>
   </view>
-  
-  <!-- 主要内容 -->
+
   <view class="main-content">
     <!-- 标题 -->
     <view class="title">证件照</view>
     <view class="subtitle">您身边的证件照管家</view>
-    
-    <!-- 登录按钮 -->
-    <view class="login-btn" bindtap="wechatLogin">快捷登录</view>
-    
-    <!-- 取消按钮 -->
-    <view class="cancel-btn" bindtap="cancelLogin">取消</view>
-    
-    <!-- 已登录状态 -->
-    <view class="logged-in" wx:if="{{userInfo}}">
+
+    <!-- 已登录且非编辑态：展示资料 -->
+    <block wx:if="{{userInfo && !isEditing}}">
       <view class="user-info">
-        <image wx:if="{{userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" class="avatar" mode="aspectFit"></image>
+        <image wx:if="{{userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" class="avatar" mode="aspectFill"></image>
         <view class="user-detail">
           <text class="nickname">{{userInfo.nickName}}</text>
           <text class="tip">已登录</text>
         </view>
       </view>
       <view class="back-btn" bindtap="cancelLogin">返回首页</view>
-    </view>
+      <view class="edit-btn" bindtap="startEdit">修改资料</view>
+    </block>
+
+    <!-- 未登录 / 编辑态：填写头像昵称 -->
+    <block wx:else>
+      <!-- 头像选择（微信新接口） -->
+      <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image wx:if="{{avatarUrl}}" src="{{avatarUrl}}" class="avatar-preview" mode="aspectFill"></image>
+        <view wx:else class="avatar-placeholder">
+          <text class="avatar-plus">+</text>
+          <text class="avatar-tip">点击选择头像</text>
+        </view>
+      </button>
+
+      <!-- 昵称输入（微信昵称填写能力） -->
+      <input
+        class="nickname-input"
+        type="nickname"
+        placeholder="请输入昵称"
+        placeholder-class="nickname-placeholder"
+        value="{{nickName}}"
+        bindinput="onNicknameChange"
+        bindblur="onNicknameChange"
+        bindnickname="onNicknameChange"
+      />
+
+      <view class="login-btn" bindtap="completeLogin">完成</view>
+      <view class="cancel-btn" bindtap="cancelLogin">取消</view>
+    </block>
   </view>
 
   <!-- 隐私协议授权弹窗（未同步时自动弹出） -->

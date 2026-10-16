@@ -40,6 +40,7 @@ const NSFW = {
       wx.request({
         url: `${config.apiUrl}/nsfw_check`,
         method: 'POST',
+        timeout: 30000,
         header: {
           'Content-Type': 'application/x-www-form-urlencoded',
           ...headers
@@ -68,19 +69,34 @@ const NSFW = {
    */
   checkImageFromFile: function (filePath) {
     return new Promise((resolve, reject) => {
-      // 读取文件为 Base64
-      wx.getFileSystemManager().readFile({
-        filePath: filePath,
-        encoding: 'base64',
-        success: (res) => {
-          this.checkImage(res.data)
-            .then(resolve)
-            .catch(reject);
-        },
-        fail: (err) => {
-          reject(new Error(`读取文件失败: ${err.errMsg}`));
-        }
-      });
+      const readAndCheck = (path) => {
+        wx.getFileSystemManager().readFile({
+          filePath: path,
+          encoding: 'base64',
+          success: (res) => {
+            this.checkImage(res.data)
+              .then(resolve)
+              .catch(reject);
+          },
+          fail: (err) => {
+            reject(new Error(`读取文件失败: ${err.errMsg}`));
+          }
+        });
+      };
+
+      // 检测前先压缩：减小上传体积，规避大图 base64 触发后端 413 / 请求超时
+      // 导致的「偶发检测失败」。压缩只用于鉴黄副本，不会改动用户最终成品图。
+      if (typeof wx.compressImage === 'function') {
+        wx.compressImage({
+          src: filePath,
+          quality: 70,
+          compressedWidth: 1280,
+          success: (r) => readAndCheck(r.tempFilePath || filePath),
+          fail: () => readAndCheck(filePath)  // 压缩失败回退原图
+        });
+      } else {
+        readAndCheck(filePath);
+      }
     });
   },
 

@@ -2,11 +2,10 @@
  * 文本内容安全检测工具
  * 在「用户输入文字 → 合成图片 → 保存/导出」链路的保存前调用，拦截违规文本。
  *
- * 底层由服务端调用微信 msgSecCheck 2.0 完成检测。
- * 官方文档：https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/sec-center/sec-check/msgSecCheck.html
+ * 底层由服务端本地敏感词 DFA 检测（开源方案，替代微信 msgSecCheck）。
+ * 不再依赖 openid / wx.login 登录态。
  */
 const Security = require('./security.js');
-const Auth = require('./auth.js');
 
 // 场景枚举：1 资料 / 2 评论 / 3 论坛 / 4 社交日志
 // 本小程序用户文字用于图片合成，归入「评论」场景
@@ -42,42 +41,40 @@ const ContentSecurity = {
       });
     }
 
-    return Auth.ensureOpenid()
-      .then((openid) => {
-        const params = { content: text, openid, scene };
-        const headers = Security.getSecurityHeaders(params, this.getConfig().appId, this.getConfig().secretKey);
-        const encryptedPayload = Security.encryptData(params, this.getConfig().secretKey);
+    const config = this.getConfig();
+    const params = { content: text, scene };
+    const headers = Security.getSecurityHeaders(params, config.appId, config.secretKey);
+    const encryptedPayload = Security.encryptData(params, config.secretKey);
 
-        return new Promise((resolve, reject) => {
-          wx.request({
-            url: `${this.getConfig().apiUrl}/text_check`,
-            method: 'POST',
-            header: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              ...headers
-            },
-            data: { payload: encryptedPayload },
-            success: (res) => {
-              if (res.statusCode === 200 && res.data) {
-                resolve(res.data);
-              } else {
-                reject(new Error(`请求失败: ${res.statusCode}`));
-              }
-            },
-            fail: (err) => reject(new Error(`网络错误: ${err.errMsg}`))
-          });
-        });
-      })
-      .catch((error) => {
-        // openid 拿不到或网络异常：返回失败态，由调用方决定是否放行
-        return {
-          status: false,
-          is_safe: false,
-          suggest: 'unknown',
-          label: -1,
-          message: error.message || '检测失败'
-        };
+    return new Promise((resolve, reject) => {
+      wx.request({
+        url: `${config.apiUrl}/text_check`,
+        method: 'POST',
+        timeout: 30000,
+        header: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          ...headers
+        },
+        data: { payload: encryptedPayload },
+        success: (res) => {
+          if (res.statusCode === 200 && res.data) {
+            resolve(res.data);
+          } else {
+            reject(new Error(`请求失败: ${res.statusCode}`));
+          }
+        },
+        fail: (err) => reject(new Error(`网络错误: ${err.errMsg}`))
       });
+    }).catch((error) => {
+      // 网络/服务异常：返回失败态，由调用方决定是否放行
+      return {
+        status: false,
+        is_safe: false,
+        suggest: 'unknown',
+        label: -1,
+        message: error.message || '检测失败'
+      };
+    });
   },
 
   /**
@@ -101,18 +98,6 @@ const ContentSecurity = {
       result = await this.checkText(text, scene);
     } finally {
       wx.hideLoading();
-    }
-
-    // openid 失效：清缓存，提示重进
-    if (result.errcode === 61010 || result.errcode === 40003) {
-      Auth.clearOpenid();
-      wx.showModal({
-        title: '请重新进入小程序',
-        content: '登录态已过期，请退出小程序后重新进入再试。',
-        showCancel: false,
-        confirmText: '我知道了'
-      });
-      return false;
     }
 
     // 接口异常：从严处理，不放行
@@ -156,15 +141,7 @@ const ContentSecurity = {
         const result = await this.checkText(list[i], scene);
         if (!result.status || !result.is_safe) {
           wx.hideLoading();
-          if (result.errcode === 61010 || result.errcode === 40003) {
-            Auth.clearOpenid();
-            wx.showModal({
-              title: '请重新进入小程序',
-              content: '登录态已过期，请退出小程序后重新进入再试。',
-              showCancel: false,
-              confirmText: '我知道了'
-            });
-          } else if (result.status) {
+          if (result.status) {
             wx.showModal({
               title: '内容不合规',
               content: '检测到文字包含违规内容，请修改后重试。',

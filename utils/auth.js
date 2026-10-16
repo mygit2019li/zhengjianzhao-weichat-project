@@ -53,10 +53,11 @@ function requestOpenid(code) {
   const encryptedPayload = Security.encryptData(params, config.secretKey);
 
   return new Promise((resolve, reject) => {
-    wx.request({
-      url: `${config.apiUrl}/login`,
-      method: 'POST',
-      header: {
+      wx.request({
+        url: `${config.apiUrl}/login`,
+        method: 'POST',
+        timeout: 30000,
+        header: {
         'Content-Type': 'application/x-www-form-urlencoded',
         ...headers
       },

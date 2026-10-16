@@ -44,6 +44,9 @@ Component({
       if (typeof wx.getPrivacySetting !== 'function') return;
       // 已在展示中，避免重复触发
       if (this.data.visible) return;
+      // 重入锁：避免 attached 与 pageLifetimes.show 同时触发导致重复 getPrivacySetting
+      if (this._checking) return;
+      this._checking = true;
 
       // 用户刚拒绝过：冷静期内不主动打扰
       let lastReject = 0;
@@ -52,7 +55,10 @@ Component({
       } catch (e) {
         lastReject = 0;
       }
-      if (Date.now() - lastReject < REJECT_COOLDOWN) return;
+      if (Date.now() - lastReject < REJECT_COOLDOWN) {
+        this._checking = false;
+        return;
+      }
 
       wx.getPrivacySetting({
         success: (res) => {
@@ -67,6 +73,9 @@ Component({
         },
         fail: () => {
           // 查询失败不阻塞使用，交由官方弹窗兜底
+        },
+        complete: () => {
+          this._checking = false;
         }
       });
     },
