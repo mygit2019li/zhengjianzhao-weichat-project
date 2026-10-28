@@ -1,36 +1,46 @@
 <view class="container">
-  <view class="preview-area">
+  <view class="preview-area {{transparentImage && bgType === 'color' && backgroundColor === 'transparent' ? 'is-transparent' : ''}}">
     <image wx:if="{{!imagePath}}" class="placeholder-icon" src="/images/icon/add-image.svg" mode="aspectFit" bindtap="uploadImage"></image>
     <text wx:if="{{!imagePath}}" class="placeholder-text" bindtap="uploadImage">点击上传图片</text>
-    
+
     <image wx:if="{{resultImage}}" class="preview-image" src="{{resultImage}}" mode="aspectFit"></image>
     <image wx:elif="{{imagePath}}" class="preview-image" src="{{imagePath}}" mode="aspectFit"></image>
+
+    <view wx:if="{{transparentImage && bgType === 'color' && backgroundColor === 'transparent'}}" class="trans-border"></view>
+
+    <view wx:if="{{resultImage && originalWidth > 0}}" class="size-badge">
+      <block wx:if="{{photoSizeKey !== 'original' && photoSizeW > 0}}">
+        <text class="size-badge-text">原 {{originalWidth}}×{{originalHeight}}</text>
+        <text class="size-badge-arrow">→</text>
+        <text class="size-badge-text size-badge-adjusted">{{photoSizeW}}×{{photoSizeH}}</text>
+      </block>
+      <text wx:else class="size-badge-text">{{originalWidth}}×{{originalHeight}}</text>
+    </view>
+
+    <view wx:if="{{isProcessing}}" class="scan-overlay">
+      <view class="scan-beam">
+        <view class="scan-line">
+          <view class="scan-line-core"></view>
+          <text class="scan-text">…检测中…</text>
+        </view>
+      </view>
+    </view>
   </view>
 
   <view class="controls-area" wx:if="{{transparentImage}}">
-    <view class="section-title">选择背景</view>
-    
-    <scroll-view scroll-x class="bg-scroll">
-      <view class="bg-options">
-        <view class="bg-item {{bgType === 'image' ? 'active' : ''}}" bindtap="selectBgImageCustom">
-          <view class="bg-thumb custom">
-            <image wx:if="{{bgType === 'image' && backgroundImage}}" src="{{backgroundImage}}" mode="aspectFill" class="full-size"></image>
-            <image wx:else src="/images/icon/add-image.svg" class="add-icon"></image>
-          </view>
-          <text>自定义背景</text>
-        </view>
+    <view class="opt-row" bindtap="openSizePanel">
+      <text class="opt-row-label">尺寸</text>
+      <view class="opt-row-value">
+        <text>{{photoSizeName}}</text>
+        <text class="opt-row-arrow">›</text>
       </view>
-    </scroll-view>
+    </view>
 
-    <view class="color-options">
-      <view wx:for="{{backgroundColorOptions}}" wx:key="key" class="color-swatch">
-        <view
-          class="color-item {{bgType === 'color' && backgroundColor === item.key ? 'active' : ''}} {{item.key === 'white' ? 'light-color' : ''}}"
-          style="{{item.style}}"
-          bindtap="selectBgColor"
-          data-color="{{item.key}}"
-        ></view>
-        <text class="color-name">{{item.name}}</text>
+    <view class="opt-row" bindtap="openBgPanel">
+      <text class="opt-row-label">背景</text>
+      <view class="opt-row-value">
+        <text>{{bgName}}</text>
+        <text class="opt-row-arrow">›</text>
       </view>
     </view>
   </view>
@@ -42,4 +52,82 @@
       <button class="btn-primary" bindtap="saveImage" disabled="{{!resultImage}}">保存到相册</button>
     </view>
   </view>
+
+  <!-- 尺寸选择面板 -->
+  <view wx:if="{{showSizePanel}}" class="opt-mask" bindtap="closeSizePanel"></view>
+  <view class="opt-panel {{showSizePanel ? 'show' : ''}}">
+    <view class="opt-panel-header">
+      <text class="opt-panel-title">尺寸</text>
+      <view class="opt-panel-underline"></view>
+    </view>
+
+    <scroll-view scroll-y class="opt-panel-body">
+      <view class="opt-panel-section">
+        <text class="opt-panel-label">证件常用尺寸</text>
+        <view class="size-chips">
+          <view
+            wx:for="{{photoSizes}}"
+            wx:key="key"
+            class="size-chip {{tempSizeKey === item.key ? 'active' : ''}}"
+            bindtap="selectSize"
+            data-key="{{item.key}}"
+          >
+            <text class="size-chip-name">{{item.name}}</text>
+            <text wx:if="{{item.mm}}" class="size-chip-mm">{{item.mm}}</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="opt-panel-footer">
+      <button class="opt-btn-cancel" bindtap="closeSizePanel">取消</button>
+      <button class="opt-btn-confirm" bindtap="confirmSize">确定</button>
+    </view>
+  </view>
+
+  <!-- 背景选择面板 -->
+  <view wx:if="{{showBgPanel}}" class="opt-mask" bindtap="closeBgPanel"></view>
+  <view class="opt-panel {{showBgPanel ? 'show' : ''}}">
+    <view class="opt-panel-header">
+      <text class="opt-panel-title">背景</text>
+      <view class="opt-panel-underline"></view>
+    </view>
+
+    <scroll-view scroll-y class="opt-panel-body">
+      <view class="opt-panel-section">
+        <text class="opt-panel-label">背景图片</text>
+        <view class="bg-custom-card {{tempBgType === 'image' ? 'active' : ''}}" bindtap="selectTempBgImage">
+          <view class="bg-custom-thumb">
+            <image wx:if="{{tempBgType === 'image' && tempBgImage}}" src="{{tempBgImage}}" mode="aspectFill" class="bg-custom-img"></image>
+            <image wx:else src="/images/icon/add-image.svg" class="add-icon"></image>
+          </view>
+          <text class="bg-custom-text">{{tempBgType === 'image' ? '已选背景图，点击更换' : '选择背景图'}}</text>
+        </view>
+      </view>
+
+      <view class="opt-panel-section" style="margin-top: 40rpx;">
+        <text class="opt-panel-label">背景颜色</text>
+        <view class="bg-color-grid">
+          <view wx:for="{{backgroundColorOptions}}" wx:key="key" class="color-swatch">
+            <view
+              class="color-item {{tempBgType === 'color' && tempBgColor === item.key ? 'active' : ''}} {{item.key === 'white' ? 'light-color' : ''}}"
+              style="{{item.style}}"
+              bindtap="selectTempBgColor"
+              data-color="{{item.key}}"
+            ></view>
+            <text class="color-name">{{item.name}}</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="opt-panel-footer">
+      <button class="opt-btn-cancel" bindtap="closeBgPanel">取消</button>
+      <button class="opt-btn-confirm" bindtap="confirmBg">确定</button>
+    </view>
+  </view>
+
+  <!-- 图片来源选择弹窗（统一组件） -->
+  <image-source-sheet show="{{showSourceSheet}}" count="{{1}}" sources="{{['album', 'camera']}}"
+                      bind:chosen="onSourceChosen" bind:close="closeSourceSheet" />
 </view>

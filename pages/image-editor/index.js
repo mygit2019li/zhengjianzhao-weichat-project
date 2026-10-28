@@ -1,7 +1,12 @@
 const Security = require('../../utils/security.js');
 const NSFW = require('../../utils/nsfw.js');
 const { checkImageSize } = require('../../utils/util.js');
-const { ID_PHOTO_COLORS, compositeBackground, base64ToTempFile } = require('../../utils/image-processor.js');
+const { ID_PHOTO_COLORS, ID_PHOTO_SIZES, compositeBackground, cropAndComposite, base64ToTempFile } = require('../../utils/image-processor.js');
+
+function getSizeName(key) {
+  const size = ID_PHOTO_SIZES.find((item) => item.key === key);
+  return size ? size.name : '原图';
+}
 
 function getBackgroundPreviewStyle(colorKey) {
   if (colorKey === 'transparent') {
@@ -39,15 +44,37 @@ const BACKGROUND_COLOR_OPTIONS = [
   { key: 'hmt-gray', name: '海马体灰' }
 ].map((item) => ({ ...item, style: getBackgroundPreviewStyle(item.key) }));
 
+function getBgName(bgType, backgroundColor) {
+  if (bgType === 'image') return '自定义背景';
+  const opt = BACKGROUND_COLOR_OPTIONS.find((item) => item.key === backgroundColor);
+  return opt ? opt.name : '透明';
+}
+
 Page({
   data: {
     imagePath: '',
+    showSourceSheet: false,
     transparentImage: '',
     resultImage: '',
     backgroundImage: '',
     backgroundColor: 'transparent',
     bgType: 'color',
+    bgName: '透明',
     backgroundColorOptions: BACKGROUND_COLOR_OPTIONS,
+    isProcessing: false,
+    photoSizes: ID_PHOTO_SIZES,
+    photoSizeKey: 'original',
+    photoSizeName: '原图',
+    photoSizeW: 0,
+    photoSizeH: 0,
+    showSizePanel: false,
+    tempSizeKey: 'original',
+    showBgPanel: false,
+    tempBgType: 'color',
+    tempBgColor: 'transparent',
+    tempBgImage: '',
+    originalWidth: 0,
+    originalHeight: 0,
   },
 
   onLoad(options) {
@@ -57,36 +84,57 @@ Page({
         this.setData({
           imagePath: options.imagePath
         });
+        this.getImageSize(options.imagePath);
         this.processImage(options.imagePath);
       });
     }
   },
 
-  uploadImage() {
-    wx.chooseImage({
-      count: 1,
-      sizeType: ['original', 'compressed'],
-      sourceType: ['album', 'camera'],
-      success: async (res) => {
-        const tempFiles = res.tempFiles;
-        if (!checkImageSize(tempFiles)) return;
-
-        const tempFilePath = res.tempFilePaths[0];
-        const isSafe = await NSFW.checkAndAlert(tempFilePath, true);
-        if (!isSafe) return;
-
-        this.setData({
-          imagePath: tempFilePath
+  // 读取图片原始宽高（用于左下角尺寸角标）
+  getImageSize(path) {
+    if (!path) return;
+    const that = this;
+    wx.getImageInfo({
+      src: path,
+      success: (info) => {
+        that.setData({
+          originalWidth: info.width,
+          originalHeight: info.height
         });
-        this.processImage(tempFilePath);
+      },
+      fail: (err) => {
+        console.warn('获取图片尺寸失败:', err);
       }
     });
   },
 
+  // 选择主图（唤起统一来源弹窗）
+  uploadImage() {
+    this.setData({ showSourceSheet: true });
+  },
+
+  closeSourceSheet() {
+    this.setData({ showSourceSheet: false });
+  },
+
+  // 统一弹窗选图完成（组件已做大小校验 + 鉴黄）
+  onSourceChosen(e) {
+    const path = (e.detail && e.detail.paths || [])[0];
+    if (!path) return;
+    this.setData({
+      showSourceSheet: false,
+      imagePath: path,
+      originalWidth: 0,
+      originalHeight: 0
+    });
+    this.getImageSize(path);
+    this.processImage(path);
+  },
+
   processImage(filePath) {
     const that = this;
-    wx.showLoading({
-      title: '正在抠图...',
+    that.setData({
+      isProcessing: true
     });
 
     const app = getApp();
@@ -119,7 +167,7 @@ Page({
             const transparentImage = humanMattingResponse.image_base64;
 
             if (!transparentImage) {
-              wx.hideLoading();
+              that.setData({ isProcessing: false });
               wx.showToast({ title: '抠图失败', icon: 'none' });
               return;
             }
@@ -130,34 +178,60 @@ Page({
             }
 
             that.setData({
-              transparentImage: processedTransparentImage
+              transparentImage: processedTransparentImage,
+              isProcessing: false,
+              photoSizeKey: 'original',
+              photoSizeName: '原图',
+              photoSizeW: 0,
+              photoSizeH: 0
             });
 
             // 默认展示透明底结果
             that.updateResult();
 
           } else {
-            wx.hideLoading();
+            that.setData({ isProcessing: false });
             wx.showToast({
               title: humanMattingResponse.message || '抠图失败',
               icon: 'none'
             });
           }
         } catch (e) {
-          wx.hideLoading();
+          that.setData({ isProcessing: false });
           console.error('Parse response failed', e);
           wx.showToast({ title: '系统错误', icon: 'none' });
         }
       },
       fail: function (err) {
-        wx.hideLoading();
+        that.setData({ isProcessing: false });
         console.error('Upload failed', err);
         wx.showToast({ title: '网络错误', icon: 'none' });
       }
     });
   },
 
-  selectBgImageCustom() {
+  openBgPanel() {
+    this.setData({
+      showBgPanel: true,
+      tempBgType: this.data.bgType,
+      tempBgColor: this.data.backgroundColor,
+      tempBgImage: this.data.backgroundImage
+    });
+  },
+
+  closeBgPanel() {
+    this.setData({ showBgPanel: false });
+  },
+
+  selectTempBgColor(e) {
+    this.setData({
+      tempBgType: 'color',
+      tempBgColor: e.currentTarget.dataset.color,
+      tempBgImage: ''
+    });
+  },
+
+  selectTempBgImage() {
     wx.chooseImage({
       count: 1,
       sizeType: ['original', 'compressed'],
@@ -168,21 +242,50 @@ Page({
         const isSafe = await NSFW.checkAndAlert(bgPath, true);
         if (!isSafe) return;
         this.setData({
-          bgType: 'image',
-          backgroundImage: bgPath,
-          backgroundColor: ''
+          tempBgType: 'image',
+          tempBgImage: bgPath,
+          tempBgColor: ''
         });
-        this.updateResult();
       }
     });
   },
 
-  selectBgColor(e) {
-    const color = e.currentTarget.dataset.color;
+  confirmBg() {
+    const { tempBgType, tempBgColor, tempBgImage } = this.data;
     this.setData({
-      bgType: 'color',
-      backgroundColor: color,
-      backgroundImage: ''
+      showBgPanel: false,
+      bgType: tempBgType,
+      backgroundColor: tempBgType === 'color' ? tempBgColor : '',
+      backgroundImage: tempBgType === 'image' ? tempBgImage : '',
+      bgName: getBgName(tempBgType, tempBgColor)
+    });
+    this.updateResult();
+  },
+
+  openSizePanel() {
+    this.setData({
+      showSizePanel: true,
+      tempSizeKey: this.data.photoSizeKey
+    });
+  },
+
+  closeSizePanel() {
+    this.setData({ showSizePanel: false });
+  },
+
+  selectSize(e) {
+    this.setData({ tempSizeKey: e.currentTarget.dataset.key });
+  },
+
+  confirmSize() {
+    const key = this.data.tempSizeKey;
+    const size = ID_PHOTO_SIZES.find((item) => item.key === key) || ID_PHOTO_SIZES[0];
+    this.setData({
+      showSizePanel: false,
+      photoSizeKey: key,
+      photoSizeName: size.name,
+      photoSizeW: size.w,
+      photoSizeH: size.h
     });
     this.updateResult();
   },
@@ -191,9 +294,36 @@ Page({
     if (!this.data.transparentImage) return;
 
     wx.showLoading({ title: '合成中...' });
-    
+
     const that = this;
-    const { bgType, backgroundImage, backgroundColor, transparentImage } = this.data;
+    const { bgType, backgroundImage, backgroundColor, transparentImage, photoSizeKey } = this.data;
+
+    // 指定证件尺寸：按目标尺寸 cover 裁切后合成（含透明底）
+    const targetSize = ID_PHOTO_SIZES.find((item) => item.key === photoSizeKey);
+    if (targetSize && targetSize.key !== 'original' && targetSize.w > 0 && targetSize.h > 0) {
+      let colorArg = '';
+      let imageArg = '';
+      if (bgType === 'image') {
+        imageArg = backgroundImage;
+      } else if (backgroundColor !== 'transparent') {
+        colorArg = backgroundColor;
+      }
+
+      cropAndComposite(
+        transparentImage,
+        colorArg,
+        imageArg,
+        targetSize.w,
+        targetSize.h,
+        function (resultPath) {
+          that.setData({ resultImage: resultPath });
+        },
+        function () {
+          wx.hideLoading();
+        }
+      );
+      return;
+    }
 
     if (bgType === 'color' && backgroundColor === 'transparent') {
       base64ToTempFile(transparentImage)

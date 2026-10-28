@@ -1,0 +1,27 @@
+<!-- 统一图片来源选择底部弹窗：遮罩 + 上滑面板 + 来源选项 -->
+<view class="iss-mask {{show ? 'show' : ''}}" bindtap="onClose"></view>
+<view class="iss-panel {{show ? 'show' : ''}}">
+  <!-- 关闭按钮 - 右上角 -->
+  <view class="iss-close-btn" bindtap="onClose">
+    <image src="/images/icon/close.svg" class="iss-close-icon" mode="aspectFit"></image>
+  </view>
+
+  <!-- 装饰顶部 -->
+  <view class="iss-decoration">
+    <view class="iss-deco-line"></view>
+  </view>
+
+  <view class="iss-header">
+    <text class="iss-title">{{title}}</text>
+    <text class="iss-subtitle">{{subtitle}}</text>
+  </view>
+
+  <view class="iss-options">
+    <view class="iss-item" wx:for="{{sourceItems}}" wx:key="key" bindtap="onTapSource" data-source="{{item.key}}">
+      <view class="iss-icon-box {{item.theme}}">
+        <image src="{{item.icon}}" class="iss-icon" mode="aspectFit"></image>
+      </view>
+      <text class="iss-text">{{item.label}}</text>
+    </view>
+  </view>
+</view>

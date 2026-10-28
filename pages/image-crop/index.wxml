@@ -139,4 +139,8 @@
   
   <!-- Canvas for Exporting -->
   <canvas type="2d" id="cropCanvas" style="width: {{canvasWidth}}px; height: {{canvasHeight}}px; position: absolute; left: -9999px; top: -9999px;"></canvas>
+
+  <!-- 图片来源选择弹窗（统一组件） -->
+  <image-source-sheet show="{{showSourceSheet}}" count="{{1}}" sources="{{['album', 'camera']}}" sizeType="{{['original']}}"
+                      bind:chosen="onSourceChosen" bind:close="closeSourceSheet" />
 </view>

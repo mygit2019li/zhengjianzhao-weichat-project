@@ -2,15 +2,25 @@
   <view class="top-bar" style="padding-top: {{statusBarHeight}}px;">
     <view class="top-inner">
       <view class="back-btn" bindtap="goBack">返回</view>
-      <view class="title">图片加水印</view>
-      <view class="right-gap"></view>
+      <view class="title">图片编辑</view>
+      <view class="top-actions">
+        <view class="top-action {{canUndo ? '' : 'disabled'}}" bindtap="onUndo">撤销</view>
+        <view class="top-action {{canRedo ? '' : 'disabled'}}" bindtap="onRedo">重做</view>
+      </view>
     </view>
   </view>
 
   <view class="content" style="padding-top: {{navHeight}}px;">
     <view class="preview-shell">
       <view id="previewBox" class="preview-box" bindtap="onPreviewTap">
-        <image wx:if="{{baseImage}}" src="{{baseImage}}" class="base-image" mode="aspectFit"></image>
+        <view wx:if="{{baseImage}}" class="base-frame" style="{{baseFrameStyle}}">
+          <image
+            src="{{baseImage}}"
+            class="base-image"
+            mode="aspectFit"
+            style="{{baseStyle}}"
+          ></image>
+        </view>
 
         <view class="layer-list">
           <view
@@ -18,7 +28,7 @@
             wx:key="id"
             class="layer-item {{activeLayerId === item.id && item.type === 'text' ? 'text-active' : ''}} {{activeLayerId === item.id && item.type === 'image' ? 'image-active' : ''}}"
             data-id="{{item.id}}"
-            style="left: {{item.x}}px; top: {{item.y}}px; width: {{item.w}}px; height: {{item.h}}px; transform: rotate({{item.rotation || 0}}deg);"
+            style="left: {{item.x}}px; top: {{item.y}}px; width: {{item.w}}px; height: {{item.h}}px; transform: rotate({{item.rotation || 0}}deg) scale({{item.type === 'image' && item.flipX ? -1 : 1}}, {{item.type === 'image' && item.flipY ? -1 : 1}});"
             catchtouchstart="onLayerTouchStart"
             catchtouchmove="onLayerTouchMove"
             catchtouchend="onLayerTouchEnd"
@@ -67,7 +77,7 @@
         </view>
       </view>
     </view>
-    <view class="tip-text">拖动贴图/文字可移动；双击文字可编辑</view>
+    <view class="tip-text">拖动贴图/文字可移动，双指缩放旋转；顶部可撤销/重做</view>
   </view>
 
   <view class="bottom-bar">
@@ -199,6 +209,94 @@
         <text class="slider-label">大小</text>
         <slider min="8" max="72" value="{{watermarkDraft.size}}" show-value bindchange="onWatermarkSizeChange" bindchanging="onWatermarkSizeChange" />
       </view>
+    </view>
+  </view>
+
+  <view wx:if="{{showAdjustPanel}}" class="panel-mask" bindtap="closeAdjustPanel"></view>
+  <view wx:if="{{showAdjustPanel}}" class="setting-panel adjust-panel" catchtap="noop">
+    <view class="panel-head">
+      <view class="panel-close" bindtap="closeAdjustPanel">关闭</view>
+      <view class="panel-title">调整</view>
+      <view class="panel-ok" bindtap="closeAdjustPanel">完成</view>
+    </view>
+
+    <view class="wm-tabs">
+      <view class="wm-tab {{adjustTab === 'image' ? 'active' : ''}}" data-tab="image" bindtap="onSwitchAdjustTab">画面</view>
+      <view class="wm-tab {{adjustTab === 'base' ? 'active' : ''}}" data-tab="base" bindtap="onSwitchAdjustTab">背景</view>
+      <view class="wm-tab {{adjustTab === 'layer' ? 'active' : ''}}" data-tab="layer" bindtap="onSwitchAdjustTab">图层</view>
+    </view>
+
+    <view wx:if="{{adjustTab === 'image'}}" class="wm-tab-panel">
+      <view class="panel-row slider-row">
+        <text class="slider-label">亮度</text>
+        <slider min="20" max="200" value="{{adjustments.brightness}}" show-value data-key="brightness" bindchanging="onAdjustChanging" bindchange="onAdjustChange" />
+      </view>
+      <view class="panel-row slider-row">
+        <text class="slider-label">对比度</text>
+        <slider min="20" max="200" value="{{adjustments.contrast}}" show-value data-key="contrast" bindchanging="onAdjustChanging" bindchange="onAdjustChange" />
+      </view>
+      <view class="panel-row slider-row">
+        <text class="slider-label">饱和度</text>
+        <slider min="0" max="200" value="{{adjustments.saturation}}" show-value data-key="saturation" bindchanging="onAdjustChanging" bindchange="onAdjustChange" />
+      </view>
+      <view class="panel-row">
+        <text class="slider-label">还原</text>
+        <view class="adjust-reset" bindtap="resetAdjustments">恢复默认</view>
+      </view>
+    </view>
+
+    <view wx:if="{{adjustTab === 'base'}}" class="wm-tab-panel">
+      <view class="panel-row slider-row">
+        <text class="slider-label">大小</text>
+        <slider min="20" max="300" value="{{baseTransform.scale}}" show-value bindchanging="onBaseScaleChanging" bindchange="onBaseScaleChange" />
+      </view>
+      <view class="panel-row slider-row">
+        <text class="slider-label">旋转</text>
+        <slider min="-180" max="180" value="{{baseTransform.rotation}}" show-value bindchanging="onBaseRotationChanging" bindchange="onBaseRotationChange" />
+      </view>
+      <view class="panel-row">
+        <text class="slider-label">翻转</text>
+        <view class="layer-btn-group">
+          <view class="layer-btn {{baseTransform.flipX ? 'active' : ''}}" data-axis="x" bindtap="onToggleBaseFlip">水平</view>
+          <view class="layer-btn {{baseTransform.flipY ? 'active' : ''}}" data-axis="y" bindtap="onToggleBaseFlip">垂直</view>
+        </view>
+      </view>
+      <view class="panel-row">
+        <text class="slider-label">还原</text>
+        <view class="adjust-reset" bindtap="resetBaseTransform">恢复默认</view>
+      </view>
+    </view>
+
+    <view wx:if="{{adjustTab === 'layer'}}" class="wm-tab-panel">
+      <block wx:if="{{layerEditor.id}}">
+        <view class="panel-row slider-row">
+          <text class="slider-label">大小</text>
+          <slider min="20" max="300" value="{{layerEditor.size}}" show-value bindchanging="onLayerSizeChanging" bindchange="onLayerSizeChange" />
+        </view>
+        <view class="panel-row slider-row">
+          <text class="slider-label">旋转</text>
+          <slider min="-180" max="180" value="{{layerEditor.rotation}}" show-value bindchanging="onLayerRotationChanging" bindchange="onLayerRotationChange" />
+        </view>
+        <view class="panel-row slider-row">
+          <text class="slider-label">透明度</text>
+          <slider min="10" max="100" value="{{layerEditor.opacity}}" show-value bindchanging="onLayerOpacityChanging" bindchange="onLayerOpacityChange" />
+        </view>
+        <view wx:if="{{layerEditor.type === 'image'}}" class="panel-row">
+          <text class="slider-label">翻转</text>
+          <view class="layer-btn-group">
+            <view class="layer-btn {{layerEditor.flipX ? 'active' : ''}}" data-axis="x" bindtap="onToggleLayerFlip">水平</view>
+            <view class="layer-btn {{layerEditor.flipY ? 'active' : ''}}" data-axis="y" bindtap="onToggleLayerFlip">垂直</view>
+          </view>
+        </view>
+        <view class="panel-row">
+          <text class="slider-label">层级</text>
+          <view class="layer-btn-group">
+            <view class="layer-btn" data-dir="up" bindtap="onMoveLayer">上移</view>
+            <view class="layer-btn" data-dir="down" bindtap="onMoveLayer">下移</view>
+          </view>
+        </view>
+      </block>
+      <view wx:else class="adjust-empty">请先在画面中选中一个图层</view>
     </view>
   </view>
 

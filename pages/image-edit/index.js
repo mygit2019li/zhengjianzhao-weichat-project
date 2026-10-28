@@ -54,7 +54,34 @@ Page({
     watermarkPositionLabel: WATERMARK_POSITIONS[5].label,
     showTextPanel: false,
     showWatermarkPanel: false,
+    showAdjustPanel: false,
     wmActiveTab: 'basic',
+    adjustTab: 'image',
+    adjustments: {
+      brightness: 100,
+      contrast: 100,
+      saturation: 100
+    },
+    // 背景图变换：缩放 / 旋转 / 镜像
+    baseTransform: {
+      scale: 100,
+      rotation: 0,
+      flipX: false,
+      flipY: false
+    },
+    baseStyle: '',
+    baseFrameStyle: '',
+    layerEditor: {
+      id: '',
+      type: '',
+      opacity: 100,
+      size: 100,
+      rotation: 0,
+      flipX: false,
+      flipY: false
+    },
+    canUndo: false,
+    canRedo: false,
     editingTextLayerId: '',
     textEditor: {
       text: '',
@@ -73,11 +100,16 @@ Page({
     this.layerSeq = 1;
     this.touchState = null;
     this.textSession = null;
+    this.history = [];
+    this.historyIndex = -1;
+    this.restoringHistory = false;
     this.calculateNavHeight();
     if (options && options.image) {
       this.setBaseImage(decodeURIComponent(options.image));
     }
     this.rebuildWatermarkPreview();
+    this.refreshBaseStyle();
+    this.pushHistory();
   },
 
   onReady() {
@@ -107,7 +139,10 @@ Page({
         this.setData({
           previewWidth: rect.width,
           previewHeight: rect.height
-        }, () => this.rebuildWatermarkPreview());
+        }, () => {
+          this.refreshBaseStyle();
+          this.rebuildWatermarkPreview();
+        });
       })
       .exec();
   },
@@ -148,16 +183,24 @@ Page({
         baseImageHeight: info.height || 0,
         renderWidth: info.width || DEFAULT_RENDER_WIDTH,
         renderHeight: info.height || DEFAULT_RENDER_HEIGHT
-      }, () => this.rebuildWatermarkPreview());
+      }, () => {
+        this.refreshBaseStyle();
+        this.rebuildWatermarkPreview();
+      });
     }).catch(() => {
-      this.setData({ baseImage: path }, () => this.rebuildWatermarkPreview());
+      this.setData({ baseImage: path }, () => {
+        this.refreshBaseStyle();
+        this.rebuildWatermarkPreview();
+      });
     });
   },
 
   onAddSticker() {
+    // 贴图需保留透明通道：只能选原图。压缩图在 iOS/部分安卓上会被转成 JPG，
+    // PNG 的透明区域会变成黑底，用户就会觉得"透明贴图加不了"。
     wx.chooseImage({
       count: 1,
-      sizeType: ['original', 'compressed'],
+      sizeType: ['original'],
       sourceType: ['album', 'camera'],
       success: async (res) => {
         const path = (res.tempFilePaths || [])[0];
@@ -168,6 +211,9 @@ Page({
         this.setData({
           layers: [...this.data.layers, layer],
           activeLayerId: layer.id
+        }, () => {
+          this.refreshLayerEditor();
+          this.pushHistory();
         });
       }
     });
@@ -211,6 +257,9 @@ Page({
         size: 42,
         bold: false
       }
+    }, () => {
+      this.refreshLayerEditor();
+      this.pushHistory();
     });
   },
 
@@ -259,8 +308,10 @@ Page({
   },
 
   closeTextPanel() {
+    const wasEditing = !!this.data.editingTextLayerId;
     this.textSession = null;
     this.setData({ showTextPanel: false, editingTextLayerId: '' });
+    if (wasEditing) this.pushHistory();
   },
 
   onTextInput(e) {
@@ -343,7 +394,10 @@ Page({
     this.setData({
       showWatermarkPanel: false,
       watermarkPositionLabel: WATERMARK_POSITIONS[this.data.watermark.positionIndex]?.label || WATERMARK_POSITIONS[0].label
-    }, () => this.rebuildWatermarkPreview());
+    }, () => {
+      this.rebuildWatermarkPreview();
+      this.pushHistory();
+    });
   },
 
   confirmWatermark() {
@@ -455,6 +509,9 @@ Page({
     this.setData({
       layers: this.data.layers.filter((item) => item.id !== this.data.activeLayerId),
       activeLayerId: ''
+    }, () => {
+      this.refreshLayerEditor();
+      this.pushHistory();
     });
   },
 
@@ -475,7 +532,7 @@ Page({
       this.openTextEditorForLayer(layer);
       return;
     }
-    this.setData({ activeLayerId: id });
+    this.setData({ activeLayerId: id }, () => this.refreshLayerEditor());
   },
 
   onDeleteLayerTap(e) {
@@ -487,14 +544,17 @@ Page({
       activeLayerId: this.data.activeLayerId === id ? '' : this.data.activeLayerId,
       editingTextLayerId: wasEditing ? '' : this.data.editingTextLayerId,
       showTextPanel: wasEditing ? false : this.data.showTextPanel
+    }, () => {
+      this.refreshLayerEditor();
+      this.pushHistory();
     });
     if (wasEditing) this.textSession = null;
   },
 
   onPreviewTap() {
-    if (this.data.showTextPanel || this.data.showWatermarkPanel) return;
+    if (this.data.showTextPanel || this.data.showWatermarkPanel || this.data.showAdjustPanel) return;
     if (!this.data.activeLayerId) return;
-    this.setData({ activeLayerId: '' });
+    this.setData({ activeLayerId: '' }, () => this.refreshLayerEditor());
   },
 
   getLayerIndex(id) {
@@ -506,14 +566,315 @@ Page({
     return this.data.layers.find((item) => item.id === this.data.activeLayerId) || null;
   },
 
+  // ---------- 历史记录：撤销 / 重做 ----------
+  captureSnapshot() {
+    return JSON.stringify({
+      layers: this.data.layers,
+      adjustments: this.data.adjustments,
+      baseTransform: this.data.baseTransform,
+      watermark: this.data.watermark
+    });
+  },
+
+  pushHistory() {
+    if (this.restoringHistory) return;
+    if (!this.history) {
+      this.history = [];
+      this.historyIndex = -1;
+    }
+    const snapshot = this.captureSnapshot();
+    if (this.history[this.historyIndex] === snapshot) return;
+    this.history = this.history.slice(0, this.historyIndex + 1);
+    this.history.push(snapshot);
+    if (this.history.length > 30) this.history.shift();
+    this.historyIndex = this.history.length - 1;
+    this.syncHistoryState();
+  },
+
+  syncHistoryState() {
+    this.setData({
+      canUndo: this.historyIndex > 0,
+      canRedo: this.historyIndex < this.history.length - 1
+    });
+  },
+
+  onUndo() {
+    if (!this.history || this.historyIndex <= 0) return;
+    this.historyIndex -= 1;
+    this.applyHistorySnapshot(this.history[this.historyIndex]);
+  },
+
+  onRedo() {
+    if (!this.history || this.historyIndex >= this.history.length - 1) return;
+    this.historyIndex += 1;
+    this.applyHistorySnapshot(this.history[this.historyIndex]);
+  },
+
+  applyHistorySnapshot(snapshot) {
+    const state = JSON.parse(snapshot);
+    this.restoringHistory = true;
+    this.textSession = null;
+    this.touchState = null;
+    const keepActive = (state.layers || []).some((item) => item.id === this.data.activeLayerId);
+    this.setData({
+      layers: state.layers || [],
+      adjustments: state.adjustments || { brightness: 100, contrast: 100, saturation: 100 },
+      baseTransform: state.baseTransform || { scale: 100, rotation: 0, flipX: false, flipY: false },
+      watermark: state.watermark || defaultWatermark(),
+      activeLayerId: keepActive ? this.data.activeLayerId : '',
+      editingTextLayerId: '',
+      showTextPanel: false,
+      showAdjustPanel: false
+    }, () => {
+      this.restoringHistory = false;
+      this.refreshBaseStyle();
+      this.refreshLayerEditor();
+      this.rebuildWatermarkPreview();
+      this.syncHistoryState();
+    });
+  },
+
+  // ---------- 图层属性 ----------
+  refreshLayerEditor() {
+    const layer = this.getActiveLayer();
+    this.layerSizeRef = layer ? layer.w : 0;
+    this.layerFontRef = layer ? (layer.fontSize || 42) : 42;
+    this.setData({
+      layerEditor: layer ? {
+        id: layer.id,
+        type: layer.type,
+        opacity: Math.round((layer.opacity == null ? 1 : layer.opacity) * 100),
+        size: 100,
+        rotation: Math.round(layer.rotation || 0),
+        flipX: !!layer.flipX,
+        flipY: !!layer.flipY
+      } : { id: '', type: '', opacity: 100, size: 100, rotation: 0, flipX: false, flipY: false }
+    });
+  },
+
+  updateActiveLayer(patch, editorPatch) {
+    const idx = this.getLayerIndex(this.data.activeLayerId);
+    if (idx < 0) return;
+    const layers = [...this.data.layers];
+    layers[idx] = { ...layers[idx], ...patch };
+    this.setData({
+      layers,
+      layerEditor: { ...this.data.layerEditor, ...(editorPatch || {}) }
+    });
+  },
+
+  applyActiveLayerOpacity(value, push) {
+    const idx = this.getLayerIndex(this.data.activeLayerId);
+    if (idx < 0) return;
+    const layers = [...this.data.layers];
+    const layer = layers[idx];
+    const alpha = value / 100;
+    // 文字层用 colorRgba 控制透明，需同步更新，保证预览与导出一致
+    layers[idx] = layer.type === 'text'
+      ? { ...layer, opacity: alpha, colorRgba: this.hexToRgba(layer.color, alpha) }
+      : { ...layer, opacity: alpha };
+    this.setData({
+      layers,
+      layerEditor: { ...this.data.layerEditor, opacity: value }
+    }, () => {
+      if (push) this.pushHistory();
+    });
+  },
+
+  onLayerOpacityChanging(e) {
+    this.applyActiveLayerOpacity(Number(e.detail.value), false);
+  },
+
+  onLayerOpacityChange(e) {
+    this.applyActiveLayerOpacity(Number(e.detail.value), true);
+  },
+
+  onLayerSizeChanging(e) {
+    this.applyLayerSize(Number(e.detail.value), false);
+  },
+
+  onLayerSizeChange(e) {
+    this.applyLayerSize(Number(e.detail.value), true);
+  },
+
+  applyLayerSize(pct, push) {
+    const layer = this.getActiveLayer();
+    if (!layer) return;
+    const ref = this.layerSizeRef || layer.w || 1;
+    const aspect = layer.w / Math.max(1, layer.h);
+    const w = this.clamp(ref * pct / 100, 30, (this.data.previewWidth || 320) * 3);
+    const h = w / Math.max(0.0001, aspect);
+    const idx = this.getLayerIndex(layer.id);
+    const layers = [...this.data.layers];
+    layers[idx] = {
+      ...layer,
+      w,
+      h,
+      x: layer.x + (layer.w - w) / 2,
+      y: layer.y + (layer.h - h) / 2
+    };
+    this.setData({
+      layers,
+      layerEditor: { ...this.data.layerEditor, size: pct }
+    }, () => {
+      if (push) this.pushHistory();
+    });
+  },
+
+  onLayerRotationChanging(e) {
+    this.applyLayerRotation(Number(e.detail.value), false);
+  },
+
+  onLayerRotationChange(e) {
+    this.applyLayerRotation(Number(e.detail.value), true);
+  },
+
+  applyLayerRotation(value, push) {
+    const layer = this.getActiveLayer();
+    if (!layer) return;
+    const idx = this.getLayerIndex(layer.id);
+    const layers = [...this.data.layers];
+    layers[idx] = { ...layer, rotation: value };
+    this.setData({
+      layers,
+      layerEditor: { ...this.data.layerEditor, rotation: value }
+    }, () => {
+      if (push) this.pushHistory();
+    });
+  },
+
+  onToggleLayerFlip(e) {
+    const axis = e.currentTarget.dataset.axis;
+    const layer = this.getActiveLayer();
+    if (!layer || layer.type !== 'image') return;
+    const patch = axis === 'x' ? { flipX: !layer.flipX } : { flipY: !layer.flipY };
+    this.updateActiveLayer(patch, patch);
+    this.pushHistory();
+  },
+
+  onMoveLayer(e) {
+    const dir = e.currentTarget.dataset.dir;
+    const idx = this.getLayerIndex(this.data.activeLayerId);
+    if (idx < 0) return;
+    const target = dir === 'up' ? idx + 1 : idx - 1;
+    if (target < 0 || target >= this.data.layers.length) return;
+    const layers = [...this.data.layers];
+    const tmp = layers[idx];
+    layers[idx] = layers[target];
+    layers[target] = tmp;
+    this.setData({ layers }, () => this.pushHistory());
+  },
+
+  // ---------- 画面调整 ----------
+  refreshBaseStyle() {
+    const adj = this.data.adjustments || {};
+    const t = this.data.baseTransform || { scale: 100, rotation: 0 };
+    const sx = (t.flipX ? -1 : 1) * (t.scale == null ? 100 : t.scale) / 100;
+    const sy = (t.flipY ? -1 : 1) * (t.scale == null ? 100 : t.scale) / 100;
+    const brightness = adj.brightness == null ? 100 : adj.brightness;
+    const contrast = adj.contrast == null ? 100 : adj.contrast;
+    const saturation = adj.saturation == null ? 100 : adj.saturation;
+    // 用实际图片显示区域做裁剪框，保证预览与导出的裁剪范围一致
+    const rect = this.getEditableBounds();
+    this.setData({
+      baseStyle: `filter: brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%); transform: rotate(${t.rotation || 0}deg) scale(${sx}, ${sy});`,
+      baseFrameStyle: `left: ${rect.x}px; top: ${rect.y}px; width: ${rect.width}px; height: ${rect.height}px;`
+    });
+  },
+
+  onOpenAdjustPanel() {
+    this.refreshLayerEditor();
+    this.setData({
+      showAdjustPanel: true,
+      adjustTab: this.data.activeLayerId ? 'layer' : 'image'
+    });
+  },
+
+  closeAdjustPanel() {
+    this.setData({ showAdjustPanel: false });
+  },
+
+  onSwitchAdjustTab(e) {
+    const tab = e.currentTarget.dataset.tab;
+    if (!tab) return;
+    this.setData({ adjustTab: tab });
+  },
+
+  onAdjustChanging(e) {
+    const key = e.currentTarget.dataset.key;
+    if (!key) return;
+    this.setData({
+      adjustments: { ...this.data.adjustments, [key]: Number(e.detail.value) }
+    }, () => this.refreshBaseStyle());
+  },
+
+  onAdjustChange(e) {
+    const key = e.currentTarget.dataset.key;
+    if (!key) return;
+    this.setData({
+      adjustments: { ...this.data.adjustments, [key]: Number(e.detail.value) }
+    }, () => {
+      this.refreshBaseStyle();
+      this.pushHistory();
+    });
+  },
+
+  resetAdjustments() {
+    this.setData({
+      adjustments: { brightness: 100, contrast: 100, saturation: 100 }
+    }, () => {
+      this.refreshBaseStyle();
+      this.pushHistory();
+    });
+  },
+
+  // ---------- 背景图变换 ----------
+  applyBaseTransform(patch, push) {
+    const next = { ...this.data.baseTransform, ...patch };
+    this.setData({ baseTransform: next }, () => {
+      this.refreshBaseStyle();
+      if (push) this.pushHistory();
+    });
+  },
+
+  onBaseScaleChanging(e) {
+    this.applyBaseTransform({ scale: Number(e.detail.value) }, false);
+  },
+
+  onBaseScaleChange(e) {
+    this.applyBaseTransform({ scale: Number(e.detail.value) }, true);
+  },
+
+  onBaseRotationChanging(e) {
+    this.applyBaseTransform({ rotation: Number(e.detail.value) }, false);
+  },
+
+  onBaseRotationChange(e) {
+    this.applyBaseTransform({ rotation: Number(e.detail.value) }, true);
+  },
+
+  onToggleBaseFlip(e) {
+    const axis = e.currentTarget.dataset.axis;
+    const t = this.data.baseTransform;
+    if (axis === 'x') {
+      this.applyBaseTransform({ flipX: !t.flipX }, true);
+    } else {
+      this.applyBaseTransform({ flipY: !t.flipY }, true);
+    }
+  },
+
+  resetBaseTransform() {
+    this.applyBaseTransform({ scale: 100, rotation: 0, flipX: false, flipY: false }, true);
+  },
+
   onLayerTouchStart(e) {
-    if (this.data.showTextPanel || this.data.showWatermarkPanel) return;
+    if (this.data.showTextPanel || this.data.showWatermarkPanel || this.data.showAdjustPanel) return;
     const id = e.currentTarget.dataset.id;
     if (!id) return;
     const idx = this.getLayerIndex(id);
     if (idx < 0) return;
     const layer = this.data.layers[idx];
-    this.setData({ activeLayerId: id });
+    this.setData({ activeLayerId: id }, () => this.refreshLayerEditor());
     this.layerTapMoved = false;
 
     if (e.touches.length >= 2 && layer.type === 'image') {
@@ -589,7 +950,8 @@ Page({
   },
 
   onLayerTouchEnd() {
-    if (this.touchState && this.touchState.mode === 'drag' && !this.layerTapMoved) {
+    const moved = !!this.layerTapMoved;
+    if (this.touchState && this.touchState.mode === 'drag' && !moved) {
       const layer = this.data.layers.find((item) => item.id === this.touchState.id);
       if (layer && layer.type === 'text') {
         this.openTextEditorForLayer(layer);
@@ -597,10 +959,11 @@ Page({
       }
     }
     this.touchState = null;
+    if (moved) this.pushHistory();
   },
 
   onResizeHandleStart(e) {
-    if (this.data.showTextPanel || this.data.showWatermarkPanel) return;
+    if (this.data.showTextPanel || this.data.showWatermarkPanel || this.data.showAdjustPanel) return;
     const id = e.currentTarget.dataset.id;
     if (!id) return;
     const idx = this.getLayerIndex(id);
@@ -631,6 +994,7 @@ Page({
     const dx = touch.clientX - this.touchState.startX;
     const dy = touch.clientY - this.touchState.startY;
     const delta = Math.max(dx, dy);
+    if (delta !== 0) this.resizeMoved = true;
     const layers = [...this.data.layers];
 
     if (layer.type === 'text') {
@@ -672,6 +1036,10 @@ Page({
   onResizeHandleEnd() {
     if (this.touchState && this.touchState.mode === 'resize-handle') {
       this.touchState = null;
+    }
+    if (this.resizeMoved) {
+      this.resizeMoved = false;
+      this.pushHistory();
     }
   },
 
@@ -859,6 +1227,8 @@ Page({
       const baseImgInfo = await this.getImageInfo(this.data.baseImage);
       const renderWidth = baseImgInfo.width;
       const renderHeight = baseImgInfo.height;
+      // 底图是 PNG 时导出 PNG，保留透明背景（如抠图成品）；否则导出 JPG 控制体积
+      const outputType = String(baseImgInfo.type || '').toLowerCase() === 'png' ? 'png' : 'jpg';
       
       const canvasInfo = await new Promise((resolve, reject) => {
         wx.createSelectorQuery()
@@ -882,7 +1252,7 @@ Page({
       await this.drawLayers(ctx, canvas, renderWidth, renderHeight);
       this.drawWatermarkPattern(ctx, this.data.watermark, renderWidth, renderHeight);
 
-      const tempFilePath = await this.exportCanvas(canvas, renderWidth, renderHeight);
+      const tempFilePath = await this.exportCanvas(canvas, renderWidth, renderHeight, outputType);
       await this.saveToAlbum(tempFilePath);
       wx.hideLoading();
       wx.showToast({ title: '保存成功', icon: 'success' });
@@ -911,8 +1281,58 @@ Page({
 
   async drawBase(ctx, canvas, renderWidth, renderHeight) {
     const img = await this.loadImage(canvas, this.data.baseImage);
-    // 按原始尺寸绘制底图，不添加背景，不缩放
-    ctx.drawImage(img, 0, 0, renderWidth, renderHeight);
+    const adj = this.data.adjustments || {};
+    const brightness = Number(adj.brightness == null ? 100 : adj.brightness);
+    const contrast = Number(adj.contrast == null ? 100 : adj.contrast);
+    const saturation = Number(adj.saturation == null ? 100 : adj.saturation);
+    const t = this.data.baseTransform || { scale: 100, rotation: 0, flipX: false, flipY: false };
+    const scale = (t.scale == null ? 100 : t.scale) / 100;
+    const needPixelFilter = brightness !== 100 || contrast !== 100 || saturation !== 100;
+    // 按原始尺寸绘制底图，不添加背景，不缩放；再按用户设置做缩放/旋转/镜像
+    ctx.save();
+    ctx.translate(renderWidth / 2, renderHeight / 2);
+    ctx.rotate(((t.rotation || 0) * Math.PI) / 180);
+    ctx.scale((t.flipX ? -1 : 1) * scale, (t.flipY ? -1 : 1) * scale);
+    ctx.drawImage(img, -renderWidth / 2, -renderHeight / 2, renderWidth, renderHeight);
+    ctx.restore();
+
+    // 微信原生 canvas 2d（尤其 iOS 真机）不支持 ctx.filter，改用像素级实现，
+    // 保证「画面调整」的亮度/对比度/饱和度在保存成品图上与预览一致生效
+    if (needPixelFilter) {
+      this.applyPixelAdjust(ctx, renderWidth, renderHeight, brightness, contrast, saturation);
+    }
+  },
+
+  // 像素级亮度/对比度/饱和度调整，对齐 CSS filter 语义与顺序（brightness→contrast→saturate）
+  applyPixelAdjust(ctx, renderWidth, renderHeight, brightness, contrast, saturation) {
+    const image = ctx.getImageData(0, 0, renderWidth, renderHeight);
+    const data = image.data;
+    const b = brightness / 100;
+    const c = contrast / 100;
+    const s = saturation / 100;
+    for (let i = 0; i < data.length; i += 4) {
+      // 跳过全透明像素：不动未被子图覆盖的画布区域，顺带提速
+      if (data[i + 3] === 0) continue;
+      // 亮度
+      let r = data[i] * b;
+      let g = data[i + 1] * b;
+      let bl = data[i + 2] * b;
+      // 对比度（围绕中灰 128）
+      r = c * (r - 128) + 128;
+      g = c * (g - 128) + 128;
+      bl = c * (bl - 128) + 128;
+      // 饱和度（围绕亮度线性插值）
+      if (s !== 1) {
+        const gray = 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+        r = gray + (r - gray) * s;
+        g = gray + (g - gray) * s;
+        bl = gray + (bl - gray) * s;
+      }
+      data[i] = r < 0 ? 0 : r > 255 ? 255 : r;
+      data[i + 1] = g < 0 ? 0 : g > 255 ? 255 : g;
+      data[i + 2] = bl < 0 ? 0 : bl > 255 ? 255 : bl;
+    }
+    ctx.putImageData(image, 0, 0);
   },
 
   async drawLayers(ctx, canvas, renderWidth, renderHeight) {
@@ -939,6 +1359,9 @@ Page({
 
       if (layer.type === 'image' && layer.src) {
         const img = await this.loadImage(canvas, layer.src);
+        if (layer.flipX || layer.flipY) {
+          ctx.scale(layer.flipX ? -1 : 1, layer.flipY ? -1 : 1);
+        }
         this.drawImageAspectFit(ctx, img, -w / 2, -h / 2, w, h);
       } else if (layer.type === 'text' && layer.text) {
         ctx.fillStyle = layer.colorRgba || '#fff';
@@ -1055,7 +1478,7 @@ Page({
     });
   },
 
-  exportCanvas(canvas, renderWidth, renderHeight) {
+  exportCanvas(canvas, renderWidth, renderHeight, fileType = 'jpg') {
     return new Promise((resolve, reject) => {
       wx.canvasToTempFilePath({
         canvas,
@@ -1065,7 +1488,7 @@ Page({
         height: renderHeight,
         destWidth: renderWidth,
         destHeight: renderHeight,
-        fileType: 'jpg',
+        fileType,
         quality: 1,
         success: (res) => resolve(res.tempFilePath),
         fail: reject

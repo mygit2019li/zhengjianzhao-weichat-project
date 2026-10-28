@@ -36,6 +36,16 @@ function applyBackgroundFill(ctx, drawWidth, drawHeight, backgroundConfig) {
   ctx.fillRect(0, 0, drawWidth, drawHeight);
 }
 
+// 证件照常用尺寸（300dpi 像素，w/h 为目标输出像素）
+const ID_PHOTO_SIZES = [
+  { key: 'original', name: '原图', mm: '', w: 0, h: 0 },
+  { key: 'inch1', name: '1寸', mm: '25×35mm', w: 295, h: 413 },
+  { key: 'inch1-large', name: '大1寸', mm: '33×48mm', w: 390, h: 567 },
+  { key: 'inch2-small', name: '小2寸', mm: '35×45mm', w: 413, h: 531 },
+  { key: 'inch2', name: '2寸', mm: '35×49mm', w: 413, h: 579 },
+  { key: 'inch2-large', name: '大2寸', mm: '35×53mm', w: 413, h: 626 }
+];
+
 // 将 base64 或本地路径转临时文件（base64写盘）
 function base64ToTempFile(imageData) {
   return new Promise((resolve, reject) => {
@@ -207,9 +217,121 @@ function compositeBackground(transparentImage, color, backgroundImage, onResult,
     });
 }
 
+// 按目标证件尺寸合成：人像 cover 裁切到目标比例，再填充背景色/背景图（或保持透明）
+function cropAndComposite(transparentImage, color, backgroundImage, targetWidth, targetHeight, onResult, onComplete) {
+  let backgroundConfig = null;
+  if (color) {
+    const colorConfig = ID_PHOTO_COLORS[color];
+    backgroundConfig = colorConfig ? (colorConfig.type === 'gradient' ? colorConfig : colorConfig.rgb) : color;
+  }
+
+  base64ToTempFile(transparentImage)
+    .then((imagePath) => {
+      wx.getImageInfo({
+        src: imagePath,
+        success: (imageInfo) => {
+          drawCroppedToSize(imagePath, imageInfo.width, imageInfo.height, targetWidth, targetHeight, backgroundConfig, backgroundImage, (result) => {
+            if (onResult) onResult(result);
+            if (onComplete) onComplete();
+          });
+        },
+        fail: (error) => {
+          console.warn('获取图片信息失败，按整图缩放处理:', error);
+          drawCroppedToSize(imagePath, 0, 0, targetWidth, targetHeight, backgroundConfig, backgroundImage, (result) => {
+            if (onResult) onResult(result);
+            if (onComplete) onComplete();
+          });
+        }
+      });
+    })
+    .catch((err) => {
+      console.error('base64转换失败:', err);
+      if (onResult) onResult(transparentImage || '');
+      if (onComplete) onComplete();
+    });
+}
+
+// 离屏 canvas：背景填充 + 人像按目标尺寸 cover 裁切（裁切偏上保留头部）
+function drawCroppedToSize(imagePath, imgW, imgH, targetW, targetH, backgroundConfig, bgImage, callback) {
+  const drawWidth = targetW;
+  const drawHeight = targetH;
+  const canvas = wx.createOffscreenCanvas({ type: '2d', width: drawWidth, height: drawHeight });
+  const ctx = canvas.getContext('2d');
+
+  const exportImage = () => {
+    // 统一导出 PNG：透明底保留 alpha，证件照保存更清晰
+    wx.canvasToTempFilePath({
+      canvas: canvas,
+      width: drawWidth,
+      height: drawHeight,
+      destWidth: drawWidth,
+      destHeight: drawHeight,
+      fileType: 'png',
+      success: (res) => callback(res.tempFilePath),
+      fail: (err) => {
+        console.error('尺寸裁切导出失败:', err);
+        callback(imagePath);
+      }
+    });
+  };
+
+  const drawPerson = () => {
+    const img = canvas.createImage();
+    img.src = imagePath;
+    img.onload = () => {
+      let sx = 0;
+      let sy = 0;
+      let sw = img.width || imgW;
+      let sh = img.height || imgH;
+
+      if (imgW > 0 && imgH > 0) {
+        // cover 裁切：等比放大填满目标框，多余部分裁掉
+        const scale = Math.max(drawWidth / imgW, drawHeight / imgH);
+        sw = Math.round(drawWidth / scale);
+        sh = Math.round(drawHeight / scale);
+        sx = Math.round((imgW - sw) / 2);
+        // 竖向多余高度偏上取（25% 位置），保留头部
+        sy = Math.round((imgH - sh) * 0.25);
+        sx = Math.max(0, Math.min(sx, imgW - sw));
+        sy = Math.max(0, Math.min(sy, imgH - sh));
+      }
+
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, drawWidth, drawHeight);
+      exportImage();
+    };
+    img.onerror = (err) => {
+      console.error('主图片加载失败:', err);
+      callback(imagePath);
+    };
+  };
+
+  if (bgImage) {
+    const bgImg = canvas.createImage();
+    bgImg.src = bgImage;
+    bgImg.onload = () => {
+      ctx.drawImage(bgImg, 0, 0, drawWidth, drawHeight);
+      drawPerson();
+    };
+    bgImg.onerror = () => {
+      if (backgroundConfig) {
+        applyBackgroundFill(ctx, drawWidth, drawHeight, backgroundConfig);
+      }
+      drawPerson();
+    };
+  } else if (backgroundConfig) {
+    applyBackgroundFill(ctx, drawWidth, drawHeight, backgroundConfig);
+    drawPerson();
+  } else {
+    // 透明底：不填充背景，保留人像 alpha
+    drawPerson();
+  }
+}
+
 module.exports = {
   ID_PHOTO_COLORS,
+  ID_PHOTO_SIZES,
   base64ToTempFile,
   compositeBackground,
-  drawBackground
+  drawBackground,
+  cropAndComposite
 };

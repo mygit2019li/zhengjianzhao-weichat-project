@@ -17,4 +17,8 @@
       <text class="mode-desc">上下拼接，适合竖向长图</text>
     </view>
   </view>
+
+  <!-- 图片来源选择弹窗（统一组件） -->
+  <image-source-sheet show="{{showSourceSheet}}" count="{{9}}" sources="{{['album', 'chat', 'camera']}}" maxSizeMB="{{0}}"
+                      bind:chosen="onSourceChosen" bind:close="closeSourceSheet" />
 </view>

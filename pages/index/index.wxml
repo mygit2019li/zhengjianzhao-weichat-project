@@ -141,50 +141,10 @@
     <canvas type="2d" id="homePuzzleCanvas" class="offscreen-canvas"></canvas>
   </view>
 
-  <!-- 图片来源选择弹窗 -->
-  <view class="action-sheet-mask {{showPuzzleSourceSheet ? 'show' : ''}}" bindtap="closePuzzleSourceSheet"></view>
-  <view class="action-sheet-panel {{showPuzzleSourceSheet ? 'show' : ''}}">
-    <!-- 关闭按钮 - 右上角 -->
-    <view class="action-close-btn" bindtap="closePuzzleSourceSheet">
-      <image src="/images/icon/close.svg" class="close-icon" mode="aspectFit"></image>
-    </view>
-    
-    <!-- 装饰顶部 -->
-    <view class="action-sheet-decoration">
-      <view class="deco-line"></view>
-    </view>
-    
-    <view class="action-header">
-      <text class="action-title">请选择图片来源</text>
-      <text class="action-subtitle">支持从多个渠道选择图片</text>
-    </view>
-    
-    <view class="action-options">
-      <!-- 从相册选择 -->
-      <view class="action-item" bindtap="onChooseAlbum">
-        <view class="action-icon-box album">
-          <image src="/images/icon/add-image.svg" class="action-icon" mode="aspectFit"></image>
-        </view>
-        <text class="action-text">从相册选择</text>
-      </view>
-      
-      <!-- 聊天记录 -->
-      <view class="action-item" bindtap="onChooseChat">
-        <view class="action-icon-box chat">
-          <image src="/images/icon/wechat-line.svg" class="action-icon" mode="aspectFit"></image>
-        </view>
-        <text class="action-text">聊天记录</text>
-      </view>
-      
-      <!-- 拍照 -->
-      <view class="action-item" bindtap="onChooseCamera">
-        <view class="action-icon-box camera">
-          <image src="/images/icon/拍照.svg" class="action-icon" mode="aspectFit"></image>
-        </view>
-        <text class="action-text">拍照</text>
-      </view>
-    </view>
-  </view>
+  <!-- 图片来源选择弹窗（统一组件） -->
+  <image-source-sheet show="{{showPuzzleSourceSheet}}" count="{{sourceSheetScene === 'puzzle' ? 9 : 1}}"
+                      sources="{{['album', 'chat', 'camera']}}"
+                      bind:chosen="onImageSourceChosen" bind:close="closePuzzleSourceSheet" />
 
   <!-- 隐私协议授权弹窗（未同步时自动弹出） -->
   <privacy-popup />

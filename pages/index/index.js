@@ -65,7 +65,9 @@ Page({
       { id: 'edit_topic', title: '图片编辑', subtitle: '加字加贴纸轻松完成', action: 'goToImageEdit', theme: 'purple' },
       { id: 'puzzle_topic', title: '拼出美好生活', subtitle: '多图排版一键完成', action: 'startQuickPuzzle', theme: 'pink' }
     ],
-    showPuzzleSourceSheet: false
+    showPuzzleSourceSheet: false,
+    // 当前弹窗对应的业务场景：puzzle 快捷拼图 / imageEdit 图片编辑 / quickCut 快速切图
+    sourceSheetScene: ''
   },
 
   // 页面加载
@@ -362,77 +364,36 @@ Page({
   },
 
   startQuickPuzzle() {
-    this.setData({ showPuzzleSourceSheet: true });
+    this.setData({ showPuzzleSourceSheet: true, sourceSheetScene: 'puzzle' });
   },
 
   closePuzzleSourceSheet() {
     this.setData({ showPuzzleSourceSheet: false });
   },
 
-  onChooseAlbum() {
-    this.chooseImageForPuzzle(['album']);
+  // 打开图片来源弹窗（统一组件），scene 标记选完后的去向
+  openImageSourceSheet(scene) {
+    this.setData({ showPuzzleSourceSheet: true, sourceSheetScene: scene });
   },
 
-  onChooseCamera() {
-    this.chooseImageForPuzzle(['camera']);
-  },
+  // 弹窗选图完成：组件已做大小校验 + 鉴黄，这里按场景分发
+  onImageSourceChosen(e) {
+    const paths = (e.detail && e.detail.paths) || [];
+    if (!paths.length) return;
 
-  onChooseChat() {
-    this.closePuzzleSourceSheet();
-    this.chooseChatImagesForPuzzle();
-  },
-
-  chooseChatImagesForPuzzle() {
-    if (!wx.chooseMessageFile) {
-      wx.showToast({
-        title: '当前微信版本不支持聊天选图',
-        icon: 'none'
-      });
-      return;
+    switch (this.data.sourceSheetScene) {
+      case 'puzzle':
+        this.navigateToPuzzle(paths);
+        break;
+      case 'imageEdit':
+        wx.navigateTo({
+          url: `/pages/image-edit/index?image=${encodeURIComponent(paths[0])}`
+        });
+        break;
+      case 'quickCut':
+        this.setData({ quickCutImages: paths });
+        break;
     }
-
-    wx.chooseMessageFile({
-      count: 9,
-      type: 'image',
-      success: async (res) => {
-        const tempFilePaths = (res.tempFiles || [])
-          .map(file => file.path)
-          .filter(Boolean);
-        if (!tempFilePaths.length) {
-          wx.showToast({ title: '未选择图片', icon: 'none' });
-          return;
-        }
-
-        const isSafe = await NSFW.checkImagesAndAlert(tempFilePaths);
-        if (!isSafe) return;
-
-        this.navigateToPuzzle(tempFilePaths);
-      },
-      fail: (err) => {
-        if (Privacy.handlePrivacyError(err)) return;
-        if (err && err.errMsg && err.errMsg.includes('cancel')) {
-          return;
-        }
-        wx.showToast({ title: '聊天图片选择失败', icon: 'none' });
-      }
-    });
-  },
-
-  chooseImageForPuzzle(sourceType) {
-    this.closePuzzleSourceSheet();
-    wx.chooseImage({
-      count: 9,
-      sizeType: ['original', 'compressed'],
-      sourceType: sourceType,
-      success: async (res) => {
-        const isSafe = await NSFW.checkImagesAndAlert(res.tempFilePaths);
-        if (!isSafe) return;
-        this.navigateToPuzzle(res.tempFilePaths);
-      },
-      fail: (err) => {
-        Privacy.handlePrivacyError(err);
-      }
-    });
   },
 
   navigateToPuzzle(tempFilePaths) {
@@ -468,24 +429,7 @@ Page({
   },
 
   goToImageEdit() {
-    wx.chooseImage({
-      count: 1,
-      sizeType: ['original', 'compressed'],
-      sourceType: ['album', 'camera'],
-      success: async (res) => {
-        if (!checkImageSize(res.tempFiles || [])) return;
-        const imagePath = (res.tempFilePaths || [])[0];
-        if (!imagePath) return;
-        const isSafe = await NSFW.checkAndAlert(imagePath, true);
-        if (!isSafe) return;
-        wx.navigateTo({
-          url: `/pages/image-edit/index?image=${encodeURIComponent(imagePath)}`
-        });
-      },
-      fail: (err) => {
-        Privacy.handlePrivacyError(err);
-      }
-    });
+    this.openImageSourceSheet('imageEdit');
   },
 
   goToGridCut() {
@@ -536,21 +480,7 @@ Page({
 
   // 快速切图 - 选择图片
   goToQuickGridCut() {
-    wx.chooseImage({
-      count: 1,
-      sizeType: ['original', 'compressed'],
-      sourceType: ['album', 'camera'],
-      success: async (res) => {
-        const isSafe = await NSFW.checkImagesAndAlert(res.tempFilePaths);
-        if (!isSafe) return;
-        this.setData({
-          quickCutImages: res.tempFilePaths
-        });
-      },
-      fail: (err) => {
-        Privacy.handlePrivacyError(err);
-      }
-    });
+    this.openImageSourceSheet('quickCut');
   },
 
   // 重新选择快速切图图片

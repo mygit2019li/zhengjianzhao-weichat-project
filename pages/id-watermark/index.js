@@ -1,10 +1,10 @@
-const { checkImageSize } = require('../../utils/util.js');
 const NSFW = require('../../utils/nsfw.js');
 const ContentSecurity = require('../../utils/content-security.js');
 
 Page({
   data: {
     userImage: '',
+    showSourceSheet: false,
     isGenerating: false,
     resultPath: '',
     
@@ -119,36 +119,34 @@ Page({
     this.updatePreviewItems();
   },
 
-  // 选择图片
+  // 选择图片（唤起统一来源弹窗）
   chooseImage() {
-    const that = this;
-    wx.chooseImage({
-      count: 1,
-      sizeType: ['original', 'compressed'],
-      sourceType: ['album', 'camera'],
-      success: async (res) => {
-        if (!checkImageSize(res.tempFiles)) return;
+    this.setData({ showSourceSheet: true });
+  },
 
-        const tempFilePath = res.tempFilePaths[0];
-        const isSafe = await that.checkImageNSFW(tempFilePath);
+  closeSourceSheet() {
+    this.setData({ showSourceSheet: false });
+  },
 
-        if (isSafe) {
-          try {
-            const imageInfo = await that.getImageInfo(tempFilePath);
-            that.setData({
-              userImage: tempFilePath,
-              previewBoxStyle: `aspect-ratio: ${imageInfo.width} / ${imageInfo.height};`
-            });
-          } catch (error) {
-            console.error('获取图片信息失败:', error);
-            that.setData({
-              userImage: tempFilePath,
-              previewBoxStyle: ''
-            });
-          }
-        }
-      }
-    });
+  // 统一弹窗选图完成（组件已做大小校验 + 鉴黄）
+  async onSourceChosen(e) {
+    const path = (e.detail && e.detail.paths || [])[0];
+    if (!path) return;
+    try {
+      const imageInfo = await this.getImageInfo(path);
+      this.setData({
+        showSourceSheet: false,
+        userImage: path,
+        previewBoxStyle: `aspect-ratio: ${imageInfo.width} / ${imageInfo.height};`
+      });
+    } catch (error) {
+      console.error('获取图片信息失败:', error);
+      this.setData({
+        showSourceSheet: false,
+        userImage: path,
+        previewBoxStyle: ''
+      });
+    }
   },
 
   // 图片鉴黄检测

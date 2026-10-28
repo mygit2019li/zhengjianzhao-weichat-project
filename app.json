@@ -74,6 +74,7 @@
   "sitemapLocation": "sitemap.json",
   "__usePrivacyCheck__": true,
   "usingComponents": {
-    "privacy-popup": "/components/privacy-popup/index"
+    "privacy-popup": "/components/privacy-popup/index",
+    "image-source-sheet": "/components/image-source-sheet/index"
   }
 }

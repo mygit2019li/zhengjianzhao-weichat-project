@@ -1,34 +1,34 @@
-const NSFW = require('../../utils/nsfw.js');
-
+// 长图拼接入口：选图统一走 image-source-sheet 组件（内含鉴黄/校验）
 Page({
+  data: {
+    showSourceSheet: false,
+    puzzleMode: 'horizontal' // 拼接方向：horizontal / vertical
+  },
+
   goHorizontal() {
-    this.chooseImages('horizontal');
+    this.setData({ showSourceSheet: true, puzzleMode: 'horizontal' });
   },
 
   goVertical() {
-    this.chooseImages('vertical');
+    this.setData({ showSourceSheet: true, puzzleMode: 'vertical' });
   },
 
-  chooseImages(mode) {
-    wx.chooseMedia({
-      count: 9,
-      mediaType: ['image'],
-      sourceType: ['album', 'camera'],
-      success: async (res) => {
-        const tempFilePaths = res.tempFiles.map(file => file.tempFilePath);
-        if (tempFilePaths.length === 0) return;
+  closeSourceSheet() {
+    this.setData({ showSourceSheet: false });
+  },
 
-        const isSafe = await NSFW.checkImagesAndAlert(tempFilePaths);
-        if (!isSafe) return;
+  // 统一弹窗选图完成（组件已做大小校验 + 鉴黄）
+  onSourceChosen(e) {
+    const paths = (e.detail && e.detail.paths) || [];
+    if (!paths.length) return;
+    this.setData({ showSourceSheet: false });
 
-        wx.navigateTo({
-          url: `/pages/pintu/index?longMode=${mode}`,
-          success: (resNav) => {
-            resNav.eventChannel.emit('acceptDataFromOpenerPage', {
-              images: tempFilePaths,
-              prechecked: true
-            });
-          }
+    wx.navigateTo({
+      url: `/pages/pintu/index?longMode=${this.data.puzzleMode}`,
+      success: (resNav) => {
+        resNav.eventChannel.emit('acceptDataFromOpenerPage', {
+          images: paths,
+          prechecked: true
         });
       }
     });

@@ -25,6 +25,7 @@ const RANDOM_QUOTES = [
 Page({
   data: {
     hasStarted: false, // 是否已开始体验
+    showSourceSheet: false, // 图片来源选择弹窗
     images: [], // { path, width, height, cropY: 0, cropHeight: 100, text: '' }
     generating: false,
 
@@ -67,34 +68,26 @@ Page({
     }
   },
 
-  // 开始体验 - 点击立即体验按钮
+  // 开始体验 - 点击立即体验按钮（仅弹来源弹窗，选图成功后再进编辑器）
   startExperience() {
-    wx.chooseImage({
-      count: 9,
-      sizeType: ['original', 'compressed'],
-      sourceType: ['album', 'camera'],
-      success: async (res) => {
-        if (!checkImageSize(res.tempFiles)) return;
-        const isSafe = await NSFW.checkImagesAndAlert(res.tempFilePaths);
-        if (!isSafe) return;
-        this.setData({ hasStarted: true });
-        this.addImages(res.tempFilePaths);
-      }
-    });
+    this.setData({ showSourceSheet: true });
   },
 
+  // 继续添加图片（同一弹窗）
   chooseImages() {
-    wx.chooseImage({
-      count: 9,
-      sizeType: ['original', 'compressed'],
-      sourceType: ['album', 'camera'],
-      success: async (res) => {
-        if (!checkImageSize(res.tempFiles)) return;
-        const isSafe = await NSFW.checkImagesAndAlert(res.tempFilePaths);
-        if (!isSafe) return;
-        this.addImages(res.tempFilePaths);
-      }
-    });
+    this.setData({ showSourceSheet: true });
+  },
+
+  closeSourceSheet() {
+    this.setData({ showSourceSheet: false });
+  },
+
+  // 统一弹窗选图完成（组件已做大小校验 + 鉴黄）
+  onSourceChosen(e) {
+    const paths = (e.detail && e.detail.paths) || [];
+    if (!paths.length) return;
+    this.setData({ showSourceSheet: false, hasStarted: true });
+    this.addImages(paths);
   },
 
   async addImages(paths) {

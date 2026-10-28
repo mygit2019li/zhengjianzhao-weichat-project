@@ -5,6 +5,7 @@ const MAX_CANVAS_DIM = 4096;
 Page({
   data: {
     imageList: [], // Array of { id, path, originalSize, originalSizeStr, compressedPath, compressedSize, compressedSizeStr, status, ratio }
+    showSourceSheet: false, // 图片来源选择弹窗
     mode: 'target', // target: 指定大小 | quality: 按质量
     quality: 80,
     targetValue: '',
@@ -141,6 +142,7 @@ Page({
 
   // ---------- 图片队列 ----------
 
+  // 选择图片（唤起统一来源弹窗）
   chooseImage() {
     const currentCount = this.data.imageList.length;
     const maxCount = 20;
@@ -148,17 +150,20 @@ Page({
       wx.showToast({ title: '最多支持20张图片', icon: 'none' });
       return;
     }
+    this.setData({ showSourceSheet: true });
+  },
 
-    wx.chooseImage({
-      count: maxCount - currentCount,
-      sizeType: ['original'],
-      sourceType: ['album', 'camera'],
-      success: async (res) => {
-        const isSafe = await NSFW.checkImagesAndAlert(res.tempFilePaths);
-        if (!isSafe) return;
-        this.addImages(res.tempFilePaths);
-      }
-    });
+  closeSourceSheet() {
+    this.setData({ showSourceSheet: false });
+  },
+
+  // 统一弹窗选图完成（组件已做鉴黄；压缩页不限制单张大小）
+  onSourceChosen(e) {
+    const left = 20 - this.data.imageList.length;
+    const paths = ((e.detail && e.detail.paths) || []).slice(0, left);
+    if (!paths.length) return;
+    this.setData({ showSourceSheet: false });
+    this.addImages(paths);
   },
 
   addImages(paths) {

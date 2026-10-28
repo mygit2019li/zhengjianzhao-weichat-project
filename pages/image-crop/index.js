@@ -1,10 +1,10 @@
-const { checkImageSize } = require('../../utils/util.js');
 const NSFW = require('../../utils/nsfw.js');
 
 Page({
   data: {
     hasStarted: false,
     imagePath: '',
+    showSourceSheet: false,
     
     // Viewport (Fixed crop frame)
     viewportWidth: 300,
@@ -63,17 +63,19 @@ Page({
   },
 
   uploadImage() {
-    wx.chooseImage({
-      count: 1,
-      sizeType: ['original'],
-      sourceType: ['album', 'camera'],
-      success: async (res) => {
-        if (!checkImageSize(res.tempFiles)) return;
-        const isSafe = await NSFW.checkAndAlert(res.tempFilePaths[0], true);
-        if (!isSafe) return;
-        this.initImage(res.tempFilePaths[0]);
-      }
-    });
+    this.setData({ showSourceSheet: true });
+  },
+
+  closeSourceSheet() {
+    this.setData({ showSourceSheet: false });
+  },
+
+  // 统一弹窗选图完成（组件已做大小校验 + 鉴黄）
+  onSourceChosen(e) {
+    const path = (e.detail && e.detail.paths || [])[0];
+    if (!path) return;
+    this.setData({ showSourceSheet: false });
+    this.initImage(path);
   },
 
   initImage(path) {

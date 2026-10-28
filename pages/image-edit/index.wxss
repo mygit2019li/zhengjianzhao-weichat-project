@@ -51,6 +51,24 @@
   width: 180rpx;
 }
 
+.top-actions {
+  width: 180rpx;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18rpx;
+}
+
+.top-action {
+  font-size: 26rpx;
+  color: #06B6D4;
+  padding: 8rpx 0;
+}
+
+.top-action.disabled {
+  color: #c2c8d0;
+}
+
 .content {
   padding-bottom: 156rpx;
   height: calc(100vh - 156rpx);
@@ -66,6 +84,11 @@
   aspect-ratio: 3 / 4;
   background: #fff;
   position: relative;
+  overflow: hidden;
+}
+
+.base-frame {
+  position: absolute;
   overflow: hidden;
 }
 
@@ -475,4 +498,58 @@
   border-radius: 12rpx;
   padding: 12rpx;
   box-sizing: border-box;
+}
+
+.panel-title {
+  flex: 1;
+  text-align: center;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.adjust-panel {
+  max-height: 72vh;
+  overflow-y: auto;
+}
+
+.adjust-reset {
+  min-width: 180rpx;
+  height: 62rpx;
+  line-height: 62rpx;
+  text-align: center;
+  background: #eef1f5;
+  color: #4b5563;
+  font-size: 28rpx;
+  border-radius: 10rpx;
+}
+
+.layer-btn-group {
+  display: flex;
+  gap: 12rpx;
+}
+
+.layer-btn {
+  min-width: 128rpx;
+  height: 62rpx;
+  line-height: 62rpx;
+  text-align: center;
+  background: #eef1f5;
+  color: #4b5563;
+  font-size: 28rpx;
+  border-radius: 10rpx;
+  border: 2rpx solid transparent;
+}
+
+.layer-btn.active {
+  background: #e6f8fb;
+  color: #06B6D4;
+  border-color: #06B6D4;
+}
+
+.adjust-empty {
+  padding: 48rpx 0;
+  text-align: center;
+  font-size: 28rpx;
+  color: #9aa3af;
 }

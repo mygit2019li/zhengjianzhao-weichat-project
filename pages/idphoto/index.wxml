@@ -12,53 +12,36 @@
   <!-- 证件照制作模块 -->
   <view wx:if="{{currentModule === 'make'}}" class="module-content">
     <view class="make-upload-layout">
-      <view class="upload-icon-container">
-        <!-- 图片上传按钮 -->
-        <view class="upload-btn-item" bindtap="uploadImageFromAlbum">
-          <view class="upload-btn-icon-wrap album">
-            <image src="/images/icon/上传.svg" mode="aspectFit" class="upload-btn-icon-img upload-btn-icon-img-sc"></image>
-          </view>
-          <text class="upload-btn-label">打开相册</text>
+      <!-- 统一上传入口：点击弹出图片来源选择弹窗 -->
+      <view class="upload-preview-container unified-upload" bindtap="openSourceSheet" data-scene="main">
+        <!-- 未上传图片时显示上传按钮 -->
+        <view wx:if="{{!imagePath}}" class="upload-buttons">
+          <text class="upload-btn-text">上传人像照片</text>
         </view>
-        <!-- 拍照按钮 -->
-        <view class="upload-btn-item" bindtap="uploadImageFromCamera">
-          <view class="upload-btn-icon-wrap camera">
-            <image src="/images/icon/拍照.svg" mode="aspectFit" class="upload-btn-icon-img"></image>
-          </view>
-          <text class="upload-btn-label">打开相机</text>
-        </view>
-      </view>
-      <view class="section make-preview-section">
-        <view class="upload-preview-container" bindtap="uploadImageFromAlbum">
-          <!-- 未上传图片时显示上传按钮 -->
-          <view wx:if="{{!imagePath}}" class="upload-buttons">
-           <text class="upload-btn-text">上传人像照片</text>
-          </view>
-          <!-- 上传图片后显示预览 -->
-          <view wx:if="{{imagePath}}" class="image-preview-wrapper">
-            <image src="{{imagePath}}" mode="aspectFit" class="preview-image" catchtap="uploadImage"></image>
-            
-            <!-- 裁剪区域 -->
-            <view wx:if="{{showCropArea}}" class="crop-container">
-              <!-- 半透明遮罩 -->
-              <view class="crop-mask"></view>
-              <!-- 裁剪框 -->
-              <view class="crop-frame" 
-                    style="width: {{cropAreaWidth}}px; height: {{cropAreaHeight}}px; left: {{cropX}}px; top: {{cropY}}px;"
-                    bindtouchstart="startMoveCrop"
-                    bindtouchmove="moveCrop"
-                    bindtouchend="endMoveCrop">
-                <!-- 裁剪控制点 -->
-                <view class="crop-handle top-left"></view>
-                <view class="crop-handle top-right"></view>
-                <view class="crop-handle bottom-left"></view>
-                <view class="crop-handle bottom-right"></view>
-              </view>
-              <!-- 裁剪操作按钮 -->
-              <view class="crop-controls">
-                <view class="crop-btn cancel" bindtap="cancelCrop">取消</view>
-                <view class="crop-btn confirm" bindtap="confirmCrop">确认</view>
-              </view>
+        <!-- 上传图片后显示预览 -->
+        <view wx:else class="image-preview-wrapper">
+          <image src="{{imagePath}}" mode="aspectFit" class="preview-image" catchtap="openSourceSheet" data-scene="main"></image>
+
+          <!-- 裁剪区域 -->
+          <view wx:if="{{showCropArea}}" class="crop-container">
+            <!-- 半透明遮罩 -->
+            <view class="crop-mask"></view>
+            <!-- 裁剪框 -->
+            <view class="crop-frame" 
+                  style="width: {{cropAreaWidth}}px; height: {{cropAreaHeight}}px; left: {{cropX}}px; top: {{cropY}}px;"
+                  bindtouchstart="startMoveCrop"
+                  bindtouchmove="moveCrop"
+                  bindtouchend="endMoveCrop">
+              <!-- 裁剪控制点 -->
+              <view class="crop-handle top-left"></view>
+              <view class="crop-handle top-right"></view>
+              <view class="crop-handle bottom-left"></view>
+              <view class="crop-handle bottom-right"></view>
+            </view>
+            <!-- 裁剪操作按钮 -->
+            <view class="crop-controls">
+              <view class="crop-btn cancel" bindtap="cancelCrop">取消</view>
+              <view class="crop-btn confirm" bindtap="confirmCrop">确认</view>
             </view>
           </view>
         </view>
@@ -489,13 +472,13 @@
   <view wx:if="{{currentModule === 'changeBg'}}" class="module-content">
     <view>
       <view class="section">
-        <view class="upload-preview-container" bindtap="uploadBgImageFromAlbum">
+        <view class="upload-preview-container" bindtap="openSourceSheet" data-scene="bg">
           <!-- 未上传图片时显示上传按钮 -->
           <view wx:if="{{!bgImagePath}}" class="upload-buttons">
             <text class="upload-note">请选择需要更换底色的证件照</text>
           </view>
           <!-- 上传图片后显示预览 -->
-          <image wx:if="{{bgImagePath}}" src="{{bgImagePath}}" mode="aspectFit" class="preview-image" catchtap="uploadBgImage"></image>
+          <image wx:if="{{bgImagePath}}" src="{{bgImagePath}}" mode="aspectFit" class="preview-image" catchtap="openSourceSheet" data-scene="bg"></image>
         </view>
       </view>
     </view>
@@ -741,4 +724,8 @@
       </view>
     </view>
   </view>
+
+  <!-- 图片来源选择弹窗（统一组件） -->
+  <image-source-sheet show="{{showSourceSheet}}" count="{{1}}" sources="{{['album', 'camera']}}"
+                      bind:chosen="onSourceChosen" bind:close="closeSourceSheet" />
 </view>

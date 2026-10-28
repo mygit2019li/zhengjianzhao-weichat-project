@@ -1,10 +1,10 @@
-const { checkImageSize } = require('../../utils/util.js');
 const NSFW = require('../../utils/nsfw.js');
 const ContentSecurity = require('../../utils/content-security.js');
 
 Page({
     data: {
         userImage: '',
+        showSourceSheet: false,
         isGenerating: false,
         resultPath: '',
         fontsLoaded: false, // Font loading status
@@ -265,24 +265,20 @@ Page({
         });
     },
 
+    // 选择图片（唤起统一来源弹窗）
     chooseImage() {
-        const that = this;
-        wx.chooseImage({
-            count: 1,
-            sizeType: ['original', 'compressed'],
-            sourceType: ['album', 'camera'],
-            success: async (res) => {
-                if (!checkImageSize(res.tempFiles)) return;
+        this.setData({ showSourceSheet: true });
+    },
 
-                // 鉴黄检测
-                const tempFilePath = res.tempFilePaths[0];
-                const isSafe = await that.checkImageNSFW(tempFilePath);
+    closeSourceSheet() {
+        this.setData({ showSourceSheet: false });
+    },
 
-                if (isSafe) {
-                    that.setData({ userImage: tempFilePath });
-                }
-            }
-        });
+    // 统一弹窗选图完成（组件已做大小校验 + 鉴黄）
+    onSourceChosen(e) {
+        const path = (e.detail && e.detail.paths || [])[0];
+        if (!path) return;
+        this.setData({ showSourceSheet: false, userImage: path });
     },
 
     // 图片鉴黄检测

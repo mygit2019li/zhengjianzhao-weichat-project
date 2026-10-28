@@ -1,10 +1,10 @@
-const { checkImageSize } = require('../../utils/util.js');
 const NSFW = require('../../utils/nsfw.js');
 
 Page({
   data: {
     imagePath: '',
     imagePaths: [],
+    showSourceSheet: false, // 图片来源选择弹窗
     currentFormat: '',
     targetFormat: 'jpg'
   },
@@ -18,19 +18,39 @@ Page({
     }
   },
 
+  // 选择图片（唤起统一来源弹窗）
   chooseImage() {
-    wx.chooseImage({
-      count: 20,
-      sizeType: ['original', 'compressed'],
-      sourceType: ['album', 'camera'],
-      success: async (res) => {
-        if (!checkImageSize(res.tempFiles)) return;
-        const selectedPaths = (res.tempFilePaths || []).slice(0, 20);
-        const isSafe = await NSFW.checkImagesAndAlert(selectedPaths);
-        if (!isSafe) return;
-        this.initImages(selectedPaths);
-      }
-    });
+    this.setData({ showSourceSheet: true });
+  },
+
+  closeSourceSheet() {
+    this.setData({ showSourceSheet: false });
+  },
+
+  // 统一弹窗选图完成（组件已做大小校验 + 鉴黄）
+  onSourceChosen(e) {
+    const paths = ((e.detail && e.detail.paths) || []).slice(0, 20);
+    if (!paths.length) return;
+    this.setData({ showSourceSheet: false });
+    this.initImages(paths);
+  },
+
+  // 放大预览某张已选图片
+  previewImage(e) {
+    const index = e.currentTarget.dataset.index;
+    wx.previewImage({ current: this.data.imagePaths[index], urls: this.data.imagePaths });
+  },
+
+  // 删除单张已选图片
+  deleteImage(e) {
+    const index = e.currentTarget.dataset.index;
+    const imagePaths = this.data.imagePaths.slice();
+    imagePaths.splice(index, 1);
+    if (!imagePaths.length) {
+      this.setData({ imagePaths: [], imagePath: '', currentFormat: '' });
+      return;
+    }
+    this.initImages(imagePaths);
   },
 
   detectFormat(path) {

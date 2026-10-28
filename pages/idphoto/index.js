@@ -1,5 +1,4 @@
 const Security = require('../../utils/security.js');
-const { checkImageSize } = require('../../utils/util.js');
 const NSFW = require('../../utils/nsfw.js');
 const ContentSecurity = require('../../utils/content-security.js');
 const { ID_PHOTO_COLORS, compositeBackground, base64ToTempFile } = require('../../utils/image-processor.js');
@@ -74,6 +73,8 @@ Page({
     },
     // 裁剪区域相关
     showCropArea: false,     // 是否显示裁剪区域
+    showSourceSheet: false,  // 图片来源选择弹窗
+    sourceSheetScene: '',    // 弹窗场景：main 制作上传 / bg 换底色上传
     cropAreaWidth: 300,      // 裁剪区域宽度
     cropAreaHeight: 400,     // 裁剪区域高度
     imageWidth: 0,           // 原始图片宽度
@@ -200,52 +201,28 @@ Page({
     }
   },
 
-  // 从相册上传照片
-  uploadImageFromAlbum: function () {
-    const that = this;
-    wx.chooseImage({
-      count: 1,
-      sizeType: ['original', 'compressed'],
-      sourceType: ['album'],
-      success: async function (res) {
-        if (!checkImageSize(res.tempFiles)) return;
-
-        // 鉴黄检测
-        const tempFilePath = res.tempFilePaths[0];
-        const isSafe = await that.checkImageNSFW(tempFilePath);
-
-        if (isSafe) {
-          that.setData({
-            imagePath: tempFilePath
-          });
-        }
-        // 如果不安全，checkImageNSFW 会显示提示，不设置 imagePath
-      }
-    });
+  // 打开图片来源选择弹窗（统一组件）
+  openSourceSheet: function (e) {
+    const scene = (e.currentTarget && e.currentTarget.dataset.scene) || 'main';
+    this.setData({ showSourceSheet: true, sourceSheetScene: scene });
   },
 
-  // 拍照上传照片
-  uploadImageFromCamera: function () {
-    const that = this;
-    wx.chooseImage({
-      count: 1,
-      sizeType: ['original', 'compressed'],
-      sourceType: ['camera'],
-      success: async function (res) {
-        if (!checkImageSize(res.tempFiles)) return;
+  closeSourceSheet: function () {
+    this.setData({ showSourceSheet: false });
+  },
 
-        // 鉴黄检测
-        const tempFilePath = res.tempFilePaths[0];
-        const isSafe = await that.checkImageNSFW(tempFilePath);
+  // 弹窗选图完成：组件已做大小校验 + 鉴黄，这里按场景分发
+  onSourceChosen: function (e) {
+    const paths = (e.detail && e.detail.paths) || [];
+    const path = paths[0];
+    if (!path) return;
 
-        if (isSafe) {
-          that.setData({
-            imagePath: tempFilePath
-          });
-        }
-        // 如果不安全，checkImageNSFW 会显示提示，不设置 imagePath
-      }
-    });
+    if (this.data.sourceSheetScene === 'bg') {
+      this.setData({ bgImagePath: path });
+    } else {
+      // 换图后重置旧的裁剪区域
+      this.setData({ imagePath: path, showCropArea: false });
+    }
   },
 
   // 图片鉴黄检测
@@ -341,11 +318,6 @@ Page({
     this.setData({
       showCropArea: false
     });
-  },
-
-  // 上传照片（兼容旧方法）
-  uploadImage: function () {
-    this.uploadImageFromAlbum();
   },
 
   // 选择尺寸
@@ -1215,57 +1187,6 @@ Page({
     this.setData({
       activeTab: tab
     });
-  },
-
-  // 从相册上传换底色图片
-  uploadBgImageFromAlbum: function () {
-    const that = this;
-    wx.chooseImage({
-      count: 1,
-      sizeType: ['original', 'compressed'],
-      sourceType: ['album'],
-      success: async function (res) {
-        if (!checkImageSize(res.tempFiles)) return;
-
-        // 鉴黄检测
-        const tempFilePath = res.tempFilePaths[0];
-        const isSafe = await that.checkImageNSFW(tempFilePath);
-
-        if (isSafe) {
-          that.setData({
-            bgImagePath: tempFilePath
-          });
-        }
-      }
-    });
-  },
-
-  // 拍照上传换底色图片
-  uploadBgImageFromCamera: function () {
-    const that = this;
-    wx.chooseImage({
-      count: 1,
-      sizeType: ['original', 'compressed'],
-      sourceType: ['camera'],
-      success: async function (res) {
-        if (!checkImageSize(res.tempFiles)) return;
-
-        // 鉴黄检测
-        const tempFilePath = res.tempFilePaths[0];
-        const isSafe = await that.checkImageNSFW(tempFilePath);
-
-        if (isSafe) {
-          that.setData({
-            bgImagePath: tempFilePath
-          });
-        }
-      }
-    });
-  },
-
-  // 上传换底色图片（兼容旧方法）
-  uploadBgImage: function () {
-    this.uploadBgImageFromAlbum();
   },
 
   // 切换智能抠图开关

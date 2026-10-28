@@ -1,0 +1,180 @@
+/* 统一图片来源选择弹窗样式（自首页 action-sheet 抽取） */
+.iss-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8rpx);
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.iss-mask.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.iss-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 48rpx 48rpx 0 0;
+  padding: 30rpx 40rpx 60rpx;
+  padding-bottom: calc(60rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 2001;
+  box-shadow: 0 -8rpx 40rpx rgba(0, 0, 0, 0.12);
+}
+
+.iss-panel.show {
+  transform: translateY(0);
+}
+
+/* 关闭按钮 - 右上角 */
+.iss-close-btn {
+  position: absolute;
+  top: 24rpx;
+  right: 24rpx;
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8rpx);
+  border: 1rpx solid rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.iss-close-btn:active {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(0.9);
+}
+
+.iss-close-icon {
+  width: 32rpx;
+  height: 32rpx;
+  opacity: 0.4;
+  filter: grayscale(100%);
+}
+
+/* 顶部装饰线 */
+.iss-decoration {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30rpx;
+}
+
+.iss-deco-line {
+  width: 60rpx;
+  height: 6rpx;
+  background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
+  border-radius: 3rpx;
+}
+
+.iss-header {
+  text-align: center;
+  margin-bottom: 50rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.iss-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1f2937;
+  letter-spacing: 1rpx;
+}
+
+.iss-subtitle {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.iss-options {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 50rpx;
+  padding: 0 20rpx;
+}
+
+.iss-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx;
+  border-radius: 20rpx;
+  transition: transform 0.2s ease;
+}
+
+.iss-item:active {
+  transform: scale(0.95);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.iss-icon-box {
+  width: 130rpx;
+  height: 130rpx;
+  border-radius: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.iss-icon-box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 36rpx;
+  padding: 2rpx;
+  background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 50%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* 相册 - 蓝色 */
+.iss-icon-box.album {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  box-shadow: 0 8rpx 24rpx rgba(59, 130, 246, 0.35);
+}
+
+/* 聊天 - 绿色 */
+.iss-icon-box.chat {
+  background: linear-gradient(135deg, #22c55e 0%, #4ade80 100%);
+  box-shadow: 0 8rpx 24rpx rgba(34, 197, 94, 0.35);
+}
+
+/* 拍照 - 橙色 */
+.iss-icon-box.camera {
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+  box-shadow: 0 8rpx 24rpx rgba(249, 115, 22, 0.35);
+}
+
+.iss-icon {
+  width: 56rpx;
+  height: 56rpx;
+  filter: brightness(0) invert(1);
+}
+
+.iss-text {
+  font-size: 26rpx;
+  color: #4b5563;
+  font-weight: 500;
+}

@@ -159,4 +159,8 @@
     <!-- Offscreen Canvas -->
     <canvas type="2d" id="canvas" class="offscreen-canvas"></canvas>
   </block>
+
+  <!-- 图片来源选择弹窗（统一组件） -->
+  <image-source-sheet show="{{showSourceSheet}}" count="{{9}}" sources="{{['album', 'chat', 'camera']}}"
+                      bind:chosen="onSourceChosen" bind:close="closeSourceSheet" />
 </view>

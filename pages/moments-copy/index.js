@@ -1,6 +1,5 @@
 // pages/jiugongge/index.js
 const { shapes, getShapePath } = require('../../utils/shapes.js');
-const { checkImageSize } = require('../../utils/util.js');
 const NSFW = require('../../utils/nsfw.js');
 const { request, BASE_URL } = require('../../utils/request.js');
 
@@ -8,6 +7,8 @@ Page({
     data: {
         // Image data
         imagePath: '',
+        showSourceSheet: false,
+        showLayoutPanel: false,
         imageWidth: 0,
         imageHeight: 0,
 
@@ -539,32 +540,30 @@ Page({
         // Prevent modal close when clicking inside
     },
 
-    // Choose image from album
+    // Choose image from album（唤起统一来源弹窗）
     chooseImage() {
-        const that = this;
-        wx.chooseImage({
-            count: 1,
-            sizeType: ['original', 'compressed'],
-            sourceType: ['album', 'camera'],
-            success: async (res) => {
-                if (!checkImageSize(res.tempFiles)) return;
+        this.setData({ showSourceSheet: true });
+    },
 
-                // 鉴黄检测
-                const tempFilePath = res.tempFilePaths[0];
-                const isSafe = await that.checkImageNSFW(tempFilePath);
+    closeSourceSheet() {
+        this.setData({ showSourceSheet: false });
+    },
 
-                if (isSafe) {
-                    that.initCropArea(tempFilePath);
-                }
-            },
-            fail: (err) => {
-                console.error('Choose image failed:', err);
-                wx.showToast({
-                    title: '选择图片失败',
-                    icon: 'none'
-                });
-            }
-        });
+    // 打开 / 关闭「形状」底部抽屉
+    toggleLayoutPanel() {
+        this.setData({ showLayoutPanel: !this.data.showLayoutPanel });
+    },
+
+    closeLayoutPanel() {
+        this.setData({ showLayoutPanel: false });
+    },
+
+    // 统一弹窗选图完成（组件已做大小校验 + 鉴黄）
+    onSourceChosen(e) {
+        const path = (e.detail && e.detail.paths || [])[0];
+        if (!path) return;
+        this.setData({ showSourceSheet: false });
+        this.initCropArea(path);
     },
 
     // 图片鉴黄检测

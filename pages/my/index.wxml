@@ -14,7 +14,7 @@
         <view class="greeting-row">
           <text class="hi-text">Hi, </text>
           <text class="name-text">{{userInfo ? userInfo.nickName : '陌生人'}}</text>
-          <image src="https://img.icons8.com/material-outlined/24/ffffff/edit--v1.png" class="edit-icon" mode="aspectFit"></image>
+          <image src="/images/icon/编辑.svg" class="edit-icon" mode="aspectFit"></image>
         </view>
         <!-- <text class="accompany-text">已经陪伴你走过 3 天</text> -->
       </view>
@@ -38,6 +38,13 @@
         </view>
         <text class="function-text">我要留言</text>
       </button>
+      <!-- 微信内置意见反馈：提交内容在小程序管理后台「客服 - 意见反馈」中查看 -->
+      <button class="function-item contact-btn" open-type="feedback">
+        <view class="function-icon">
+          <image src="/images/icon/messages-line.svg" class="icon-image" mode="aspectFit"></image>
+        </view>
+        <text class="function-text">意见反馈</text>
+      </button>
       <view class="function-item" bindtap="navigateToLike">
         <view class="function-icon">
           <image src="/images/icon/赞.svg" class="icon-image" mode="aspectFit"></image>
@@ -50,19 +57,13 @@
         </view>
         <text class="function-text">分享</text>
       </button>
-      <view class="function-item empty"></view>
-      <view class="function-item empty"></view>
-    </view>
-    
-    <view class="function-row">
-
     </view>
   </view>
 
   <!-- AI助手模块 -->
   <view class="explore-card">
     <view class="explore-title">AI助手</view>
-    <view class="function-row">
+    <view class="function-row" style="justify-content: flex-start; gap: 40rpx;">
       <view class="function-item" bindtap="navigateToPdf2img">
         <view class="function-icon">
           <image src="/images/icon/pdf-color.png" class="icon-image" mode="aspectFit"></image>
@@ -75,9 +76,6 @@
         </view>
         <text class="function-text">课本封面</text>
       </view>
-      <view class="function-item empty"></view>
-      <view class="function-item empty"></view>
-      <view class="function-item empty"></view>
     </view>
   </view>
 
