@@ -42,11 +42,6 @@ Component({
       type: Array,
       value: ['original', 'compressed']
     },
-    // 单张大小上限（MB），0 表示不校验。压缩/长图等专吃大图的入口传 0
-    maxSizeMB: {
-      type: Number,
-      value: 15
-    },
     title: {
       type: String,
       value: '请选择图片来源'
@@ -68,18 +63,6 @@ Component({
         .map(key => SOURCE_META[key])
         .filter(Boolean);
       this.setData({ sourceItems: items });
-    }
-  },
-
-  lifetimes: {
-    // 兜底：调用方未显式传 sources（走默认值）时 observers 不触发，这里补渲染一次
-    attached: function () {
-      if (!this.data.sourceItems.length) {
-        const items = (this.properties.sources || [])
-          .map(key => SOURCE_META[key])
-          .filter(Boolean);
-        this.setData({ sourceItems: items });
-      }
     }
   },
 
@@ -107,20 +90,16 @@ Component({
         sizeType: this.properties.sizeType,
         sourceType: [sourceType],
         success: async (res) => {
-          const paths = res.tempFilePaths || [];
-          if (this.properties.maxSizeMB > 0 && !checkImageSize(res.tempFiles, this.properties.maxSizeMB)) {
-            // 大小超限：保留弹窗，便于换图重试
+          if (!checkImageSize(res.tempFiles)) {
             this.finish();
             return;
           }
+          const paths = res.tempFilePaths || [];
           const isSafe = await NSFW.checkImagesAndAlert(paths);
           if (isSafe && paths.length) {
             this.triggerEvent('chosen', { paths, source: sourceType });
-            this.finish(true);
-          } else {
-            // 鉴黄不通过：与大小超限保持一致，保留弹窗重试
-            this.finish();
           }
+          this.finish(true);
         },
         fail: (err) => {
           Privacy.handlePrivacyError(err);
@@ -147,17 +126,15 @@ Component({
             this.finish();
             return;
           }
-          if (this.properties.maxSizeMB > 0 && !checkImageSize(files, this.properties.maxSizeMB)) {
+          if (!checkImageSize(files)) {
             this.finish();
             return;
           }
           const isSafe = await NSFW.checkImagesAndAlert(paths);
           if (isSafe) {
             this.triggerEvent('chosen', { paths, source: 'chat' });
-            this.finish(true);
-          } else {
-            this.finish();
           }
+          this.finish(true);
         },
         fail: (err) => {
           if (Privacy.handlePrivacyError(err)) {

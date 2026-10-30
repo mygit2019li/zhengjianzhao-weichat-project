@@ -553,3 +553,93 @@
   font-size: 28rpx;
   color: #9aa3af;
 }
+
+/* 抠图面板 */
+.layer-btn-disabled {
+  opacity: 0.45;
+}
+
+.matting-tip {
+  margin-top: 22rpx;
+  padding: 0 4rpx 6rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: #9aa3af;
+}
+
+/* 画笔框选入口 */
+.pick-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 6rpx 0 24rpx;
+  padding: 22rpx 24rpx;
+  background: #f4fbfd;
+  border: 2rpx solid #cdeef5;
+  border-radius: 16rpx;
+}
+
+.pick-entry-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.pick-entry-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #0e7490;
+}
+
+.pick-entry-desc {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #7d8b99;
+}
+
+.pick-entry-go {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  padding: 10rpx 24rpx;
+  font-size: 24rpx;
+  color: #fff;
+  background: #06B6D4;
+  border-radius: 30rpx;
+}
+
+/* 画笔涂抹层（盖在预览区上方） */
+.pick-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 20;
+}
+
+/* 点选提示条（画布顶部悬浮） */
+.pick-hint {
+  position: absolute;
+  top: 16rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  padding: 12rpx 22rpx;
+  background: rgba(17, 24, 39, 0.82);
+  border-radius: 40rpx;
+  z-index: 30;
+}
+
+.pick-hint-text {
+  font-size: 24rpx;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.pick-hint-cancel {
+  margin-left: 18rpx;
+  padding-left: 18rpx;
+  border-left: 1rpx solid rgba(255, 255, 255, 0.3);
+  font-size: 24rpx;
+  color: #7dd3fc;
+}

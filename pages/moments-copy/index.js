@@ -8,7 +8,6 @@ Page({
         // Image data
         imagePath: '',
         showSourceSheet: false,
-        showLayoutPanel: false,
         imageWidth: 0,
         imageHeight: 0,
 
@@ -547,15 +546,6 @@ Page({
 
     closeSourceSheet() {
         this.setData({ showSourceSheet: false });
-    },
-
-    // 打开 / 关闭「形状」底部抽屉
-    toggleLayoutPanel() {
-        this.setData({ showLayoutPanel: !this.data.showLayoutPanel });
-    },
-
-    closeLayoutPanel() {
-        this.setData({ showLayoutPanel: false });
     },
 
     // 统一弹窗选图完成（组件已做大小校验 + 鉴黄）

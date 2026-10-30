@@ -1,5 +1,6 @@
 const NSFW = require('../../utils/nsfw.js');
 const ContentSecurity = require('../../utils/content-security.js');
+const Security = require('../../utils/security.js');
 
 const DEFAULT_RENDER_WIDTH = 1080;
 const DEFAULT_RENDER_HEIGHT = 1440;
@@ -55,6 +56,13 @@ Page({
     showTextPanel: false,
     showWatermarkPanel: false,
     showAdjustPanel: false,
+    matting: false,
+    showMattingPanel: false,
+    mattingTarget: 'base',
+    mattingMode: 'auto',
+    mattingAsNewLayer: false,
+    activeImageLayerId: '',
+    mattingPickMode: false,
     wmActiveTab: 'basic',
     adjustTab: 'image',
     adjustments: {
@@ -105,11 +113,13 @@ Page({
     this.restoringHistory = false;
     this.calculateNavHeight();
     if (options && options.image) {
-      this.setBaseImage(decodeURIComponent(options.image));
+      // 底图先就位再记快照，否则历史里的首帧没有底图，抠图就无法撤销
+      this.setBaseImage(decodeURIComponent(options.image), () => this.pushHistory());
+    } else {
+      this.pushHistory();
     }
     this.rebuildWatermarkPreview();
     this.refreshBaseStyle();
-    this.pushHistory();
   },
 
   onReady() {
@@ -117,7 +127,7 @@ Page({
     const eventChannel = this.getOpenerEventChannel && this.getOpenerEventChannel();
     if (eventChannel) {
       eventChannel.on('acceptImageToEdit', (payload = {}) => {
-        if (payload.image) this.setBaseImage(payload.image);
+        if (payload.image) this.setBaseImage(payload.image, () => this.pushHistory());
       });
     }
     if (!this.data.baseImage) this.chooseBaseImage(true);
@@ -136,6 +146,13 @@ Page({
       .select('#previewBox')
       .boundingClientRect((rect) => {
         if (!rect) return;
+        // 点选抠图需要把点击坐标换算到预览区内，先记住预览区的位置
+        this.previewRect = {
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height
+        };
         this.setData({
           previewWidth: rect.width,
           previewHeight: rect.height
@@ -163,7 +180,7 @@ Page({
         if (!paths[0]) return;
         const isSafe = await NSFW.checkAndAlert(paths[0], true);
         if (!isSafe) return;
-        this.setBaseImage(paths[0]);
+        this.setBaseImage(paths[0], () => this.pushHistory());
       },
       fail: (err) => {
         if (!backIfCancel) return;
@@ -174,8 +191,13 @@ Page({
     });
   },
 
-  setBaseImage(path) {
+  setBaseImage(path, after) {
     if (!path) return;
+    const done = () => {
+      this.refreshBaseStyle();
+      this.rebuildWatermarkPreview();
+      if (typeof after === 'function') after();
+    };
     this.getImageInfo(path).then((info) => {
       this.setData({
         baseImage: path,
@@ -183,15 +205,9 @@ Page({
         baseImageHeight: info.height || 0,
         renderWidth: info.width || DEFAULT_RENDER_WIDTH,
         renderHeight: info.height || DEFAULT_RENDER_HEIGHT
-      }, () => {
-        this.refreshBaseStyle();
-        this.rebuildWatermarkPreview();
-      });
+      }, done);
     }).catch(() => {
-      this.setData({ baseImage: path }, () => {
-        this.refreshBaseStyle();
-        this.rebuildWatermarkPreview();
-      });
+      this.setData({ baseImage: path }, done);
     });
   },
 
@@ -217,6 +233,517 @@ Page({
         });
       }
     });
+  },
+
+  // ---------- 抠图（去背景）：可对底图或选中图层抠图，结果保留透明通道 ----------
+  onOpenMattingPanel() {
+    if (this.data.matting) return;
+    const layer = this.getActiveLayer();
+    // 打开面板时退出点选模式，避免提示条与面板同时存在
+    this.setData({
+      showMattingPanel: true,
+      mattingPickMode: false,
+      mattingTarget: layer && layer.type === 'image' ? 'layer' : 'base'
+    });
+  },
+
+  closeMattingPanel() {
+    this.setData({ showMattingPanel: false });
+  },
+
+  onPickMattingTarget(e) {
+    const target = e.currentTarget.dataset.target;
+    if (target === 'layer') {
+      const layer = this.getActiveLayer();
+      if (!layer || layer.type !== 'image') {
+        wx.showToast({ title: '请先选中一个贴图图层', icon: 'none' });
+        return;
+      }
+    }
+    this.setData({ mattingTarget: target });
+  },
+
+  onPickMattingMode(e) {
+    this.setData({ mattingMode: e.currentTarget.dataset.mode });
+  },
+
+  onMattingAsNewLayerChange(e) {
+    this.setData({ mattingAsNewLayer: !!e.detail.value });
+  },
+
+  // ---------- 智能画笔抠图：涂哪个物体就抠哪个 ----------
+  onStartPickMode() {
+    if (this.data.matting) return;
+    if (!this.data.baseImage) {
+      wx.showToast({ title: '请先选择图片', icon: 'none' });
+      return;
+    }
+    // 记住进入画笔模式时的底图，避免中途换图后坐标对不上
+    this.pickSourceImage = this.data.baseImage;
+    this.brushPoints = [];
+    this.setData({ mattingPickMode: true, showMattingPanel: false, activeLayerId: '' }, () => {
+      this.refreshLayerEditor();
+      this.initPickCanvas();
+    });
+    this.measurePreviewBox();
+  },
+
+  onCancelPickMode() {
+    this.setData({ mattingPickMode: false });
+  },
+
+  // 画笔画布：盖在预览区上方，负责显示涂抹轨迹并接收手势
+  initPickCanvas(retry = true) {
+    const query = this.createSelectorQuery();
+    query.select('#pickCanvas').fields({ node: true, size: true }).exec((res) => {
+      const info = res && res[0];
+      if (!info || !info.node) {
+        // wx:if 刚创建时节点可能还没就绪，稍后重试一次
+        if (retry) setTimeout(() => this.initPickCanvas(false), 80);
+        return;
+      }
+      const canvas = info.node;
+      const dpr = wx.getSystemInfoSync().pixelRatio || 2;
+      canvas.width = Math.max(1, Math.floor(info.width * dpr));
+      canvas.height = Math.max(1, Math.floor(info.height * dpr));
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 22;
+      ctx.strokeStyle = 'rgba(6, 182, 212, 0.45)';
+      ctx.fillStyle = 'rgba(6, 182, 212, 0.45)';
+      this.pickCanvas = { ctx, width: info.width, height: info.height };
+      this.brushPoints = [];
+    });
+  },
+
+  // 手势坐标换算到画布坐标（画布与预览区同尺寸同心）
+  getBrushTouchPoint(e) {
+    const list = (e && e.touches && e.touches.length)
+      ? e.touches
+      : ((e && e.changedTouches) || []);
+    const touch = list[0];
+    const rect = this.previewRect;
+    if (!touch || !rect) return null;
+    const x = typeof touch.clientX === 'number' ? touch.clientX - rect.left : touch.x;
+    const y = typeof touch.clientY === 'number' ? touch.clientY - rect.top : touch.y;
+    if (!isFinite(x) || !isFinite(y)) return null;
+    return { x, y };
+  },
+
+  onBrushTouchStart(e) {
+    if (this.data.matting) return;
+    if (!this.pickCanvas) {
+      this.initPickCanvas();
+      return;
+    }
+    const point = this.getBrushTouchPoint(e);
+    if (!point) return;
+    this.brushPoints = [point];
+    const { ctx } = this.pickCanvas;
+    ctx.clearRect(0, 0, this.pickCanvas.width, this.pickCanvas.height);
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
+  },
+
+  onBrushTouchMove(e) {
+    if (this.data.matting) return;
+    if (!this.pickCanvas || !this.brushPoints.length) return;
+    const point = this.getBrushTouchPoint(e);
+    if (!point) return;
+    const last = this.brushPoints[this.brushPoints.length - 1];
+    const dx = point.x - last.x;
+    const dy = point.y - last.y;
+    // 过近的采样点丢弃，避免点数爆炸
+    if (dx * dx + dy * dy < 16) return;
+    this.brushPoints.push(point);
+    const { ctx } = this.pickCanvas;
+    ctx.lineTo(point.x, point.y);
+    ctx.stroke();
+  },
+
+  onBrushTouchEnd() {
+    if (this.data.matting) return;
+    const points = this.brushPoints || [];
+    if (!points.length) return;
+    const imgRect = this.getEditableBounds();
+    if (!imgRect.width || !imgRect.height) return;
+
+    // 按距离均匀抽样，最多 24 个点，避免提示点过多拖慢推理
+    const step = Math.max(1, Math.ceil(points.length / 24));
+    const sampled = points
+      .filter((item, index) => index % step === 0 || index === points.length - 1)
+      .map((item) => ({
+        x: (item.x - imgRect.x) / imgRect.width,
+        y: (item.y - imgRect.y) / imgRect.height
+      }))
+      .filter((item) => item.x >= 0 && item.x <= 1 && item.y >= 0 && item.y <= 1)
+      .map((item) => [Number(item.x.toFixed(4)), Number(item.y.toFixed(4))]);
+
+    this.brushPoints = [];
+    if (!sampled.length) {
+      wx.showToast({ title: '请在图片上涂抹', icon: 'none' });
+      if (this.pickCanvas) {
+        this.pickCanvas.ctx.clearRect(0, 0, this.pickCanvas.width, this.pickCanvas.height);
+      }
+      return;
+    }
+    this.requestBrushMatting(sampled);
+  },
+
+  async requestBrushMatting(points) {
+    const source = this.pickSourceImage || this.data.baseImage;
+    if (!source) return;
+    const app = getApp();
+    const apiUrl = app.globalData.apiUrl;
+    // 画笔点位用 JSON 字符串传：端上签名与后端解密到的字符串完全一致
+    const params = {
+      matting_mode: 'brush',
+      click_points: JSON.stringify(points),
+      max_edge: 1600
+    };
+    const payload = Security.encryptData(params, app.globalData.apiSecretKey);
+    const securityHeaders = Security.getSecurityHeaders(
+      { ...params },
+      app.globalData.appId,
+      app.globalData.apiSecretKey
+    );
+
+    this.setData({ matting: true });
+    wx.showLoading({ title: '识别物体中...', mask: true });
+
+    let uploadPath = source;
+    try {
+      uploadPath = await this.ensureUploadablePath(source);
+    } catch (e) {
+      console.error('resolve brush matting source failed:', e, source);
+      wx.hideLoading();
+      this.setData({ matting: false });
+      wx.showToast({ title: '图片读取失败，请重新选择', icon: 'none' });
+      return;
+    }
+
+    wx.uploadFile({
+      url: `${apiUrl}/matting`,
+      filePath: uploadPath,
+      name: 'input_image',
+      header: securityHeaders,
+      formData: { payload },
+      success: (res) => {
+        wx.hideLoading();
+        this.setData({ matting: false });
+        if (res.statusCode !== 200) {
+          console.error('brush matting http error:', res.statusCode, res.data);
+          wx.showToast({ title: `服务异常(${res.statusCode})`, icon: 'none' });
+          return;
+        }
+        let result = null;
+        try {
+          result = JSON.parse(res.data || '{}');
+        } catch (e) {
+          result = null;
+        }
+        if (!result || (result.status !== true && result.status !== 1) || !result.image_base64) {
+          wx.showToast({ title: (result && result.message) || '没识别到物体，换个位置再点', icon: 'none' });
+          return;
+        }
+        this.applyPointMattingResult(result);
+      },
+      fail: (err) => {
+        console.error('brush matting failed:', err, uploadPath);
+        wx.hideLoading();
+        this.setData({ matting: false });
+        wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+      }
+    });
+  },
+
+  // 把画笔结果按原图包围盒位置变成一个独立图层
+  applyPointMattingResult(result) {
+    const raw = String(result.image_base64 || '');
+    const pure = raw.indexOf(',') >= 0 ? raw.split(',')[1] : raw;
+    const filePath = `${wx.env.USER_DATA_PATH}/matting_brush_${Date.now()}.png`;
+    try {
+      wx.getFileSystemManager().writeFileSync(filePath, pure, 'base64');
+    } catch (e) {
+      console.error('write brush matting result failed:', e);
+      wx.showToast({ title: '抠图结果保存失败', icon: 'none' });
+      return;
+    }
+
+    const bounds = this.getEditableBounds();
+    const bbox = Array.isArray(result.bbox) ? result.bbox : [0, 0, 1, 1];
+    const layer = {
+      id: `layer_${Date.now()}_${this.layerSeq++}`,
+      type: 'image',
+      src: filePath,
+      text: '',
+      x: bounds.x + (bbox[0] || 0) * bounds.width,
+      y: bounds.y + (bbox[1] || 0) * bounds.height,
+      w: Math.max(24, (bbox[2] || 1) * bounds.width),
+      h: Math.max(24, (bbox[3] || 1) * bounds.height),
+      rotation: 0,
+      opacity: 1
+    };
+
+    this.setData({
+      layers: this.data.layers.concat(layer),
+      activeLayerId: layer.id,
+      mattingPickMode: false
+    }, () => {
+      this.refreshLayerEditor();
+      this.pushHistory();
+      wx.showToast({ title: '已抠出，可拖动调整', icon: 'none' });
+    });
+  },
+
+  // 把图片来源统一转成可上传的本地路径：
+  // - 开发者工具临时文件为 http://tmp/... ，属于本地文件，直接上传
+  // - data:base64 直接落盘为文件
+  // - 真正的网络图片先 downloadFile 再上传
+  ensureUploadablePath(path) {
+    return new Promise((resolve, reject) => {
+      const src = String(path || '');
+      if (!src) {
+        reject(new Error('empty-path'));
+        return;
+      }
+      if (/^data:/i.test(src)) {
+        const pure = src.split(',')[1] || '';
+        const filePath = `${wx.env.USER_DATA_PATH}/matting_src_${Date.now()}.png`;
+        try {
+          wx.getFileSystemManager().writeFileSync(filePath, pure, 'base64');
+          resolve(filePath);
+        } catch (e) {
+          reject(e);
+        }
+        return;
+      }
+      // http://tmp/、http://usr/ 是开发者工具映射的本地临时文件/用户目录
+      if (/^https?:\/\/(tmp|usr|store)\//i.test(src)) {
+        resolve(src);
+        return;
+      }
+      if (/^https?:\/\//i.test(src)) {
+        wx.downloadFile({
+          url: src,
+          success: (res) => {
+            if (res.statusCode === 200 && res.tempFilePath) resolve(res.tempFilePath);
+            else reject(new Error('download-failed'));
+          },
+          fail: reject
+        });
+        return;
+      }
+      resolve(src);
+    });
+  },
+
+  async onStartMatting() {
+    if (this.data.matting) return;
+    const target = this.data.mattingTarget;
+    const mode = this.data.mattingMode;
+    const layer = this.getActiveLayer();
+    let sourcePath = '';
+    if (target === 'layer') {
+      if (!layer || layer.type !== 'image' || !layer.src) {
+        wx.showToast({ title: '请先选中一个贴图图层', icon: 'none' });
+        return;
+      }
+      sourcePath = layer.src;
+    } else {
+      sourcePath = this.data.baseImage;
+    }
+    if (!sourcePath) {
+      wx.showToast({ title: '请先选择图片', icon: 'none' });
+      return;
+    }
+
+    const asNewLayer = target === 'base' && this.data.mattingAsNewLayer;
+    const app = getApp();
+    const apiUrl = app.globalData.apiUrl;
+    // 不再固定人像模型：由后端按 matting_mode 选择模型链
+    const formData = {
+      matting_mode: mode,
+      max_edge: 1600
+    };
+    // 签名与加密使用同一份明文参数（与后端解密后校验的字段一致）
+    const signData = { ...formData };
+    const payload = Security.encryptData(formData, app.globalData.apiSecretKey);
+    const securityHeaders = Security.getSecurityHeaders(
+      signData,
+      app.globalData.appId,
+      app.globalData.apiSecretKey
+    );
+
+    this.setData({ matting: true, showMattingPanel: false });
+    wx.showLoading({ title: '正在抠图...', mask: true });
+
+    let uploadPath = sourcePath;
+    try {
+      uploadPath = await this.ensureUploadablePath(sourcePath);
+    } catch (e) {
+      console.error('resolve matting source failed:', e, sourcePath);
+      wx.hideLoading();
+      this.setData({ matting: false });
+      wx.showToast({ title: '图片读取失败，请重新选择', icon: 'none' });
+      return;
+    }
+
+    const failWith = (err, path) => {
+      const errMsg = (err && err.errMsg) || '';
+      console.error('matting request failed:', err, path);
+      wx.hideLoading();
+      this.setData({ matting: false });
+      let title = '抠图失败，请重试';
+      if (/url not in domain list/i.test(errMsg)) {
+        title = '域名未校验，请开启不校验合法域名';
+      } else if (/timeout/i.test(errMsg)) {
+        title = '抠图超时，请重试';
+      } else if (/uploadFile|file/i.test(errMsg)) {
+        title = '图片上传失败，请重试';
+      }
+      wx.showToast({ title, icon: 'none' });
+    };
+
+    // retried: 上传失败后是否已尝试过 downloadFile 转换路径
+    const sendRequest = (path, retried) => {
+      wx.uploadFile({
+        url: `${apiUrl}/matting`,
+        filePath: path,
+        name: 'input_image',
+        header: securityHeaders,
+        formData: { payload },
+        success: (res) => {
+          wx.hideLoading();
+          this.setData({ matting: false });
+
+          // 先把 HTTP 层错误单独报出来，方便定位（域名/服务/超时）
+          if (res.statusCode !== 200) {
+            console.error('matting http error:', res.statusCode, res.data);
+            wx.showToast({ title: `服务异常(${res.statusCode})`, icon: 'none' });
+            return;
+          }
+
+          let result = null;
+          try {
+            result = JSON.parse(res.data || '{}');
+          } catch (e) {
+            result = null;
+          }
+
+          if (!result) {
+            wx.showToast({ title: '抠图失败，请重试', icon: 'none' });
+            return;
+          }
+          if (result.status !== true && result.status !== 1) {
+            wx.showToast({ title: result.message || '抠图失败，请重试', icon: 'none' });
+            return;
+          }
+          if (!result.image_base64) {
+            wx.showToast({ title: '抠图失败，请重试', icon: 'none' });
+            return;
+          }
+          const notice = mode !== 'portrait' && result.model === 'modnet_photographic_portrait_matting'
+            ? '通用模型未部署，已用人像模型'
+            : '';
+          this.applyMattingResult(result.image_base64, {
+            target,
+            layerId: layer && layer.id,
+            asNewLayer,
+            notice
+          });
+        },
+        fail: (err) => {
+          const errMsg = (err && err.errMsg) || '';
+          // 部分环境下临时路径（http://tmp/...）不能直接上传，先下载成可上传路径再重试一次
+          if (!retried && /^https?:\/\//i.test(path) && /file|path|invalid/i.test(errMsg)) {
+            console.warn('matting upload path rejected, retry via downloadFile:', errMsg);
+            wx.downloadFile({
+              url: path,
+              success: (dl) => {
+                if (dl.statusCode === 200 && dl.tempFilePath) {
+                  sendRequest(dl.tempFilePath, true);
+                } else {
+                  failWith(err, path);
+                }
+              },
+              fail: () => failWith(err, path)
+            });
+            return;
+          }
+          failWith(err, path);
+        }
+      });
+    };
+
+    sendRequest(uploadPath, false);
+  },
+
+  applyMattingResult(base64Image, options) {
+    const opts = options || {};
+    const pure = String(base64Image).split(',')[1] || String(base64Image);
+    const filePath = `${wx.env.USER_DATA_PATH}/matting_${Date.now()}.png`;
+    try {
+      wx.getFileSystemManager().writeFileSync(filePath, pure, 'base64');
+    } catch (e) {
+      console.error('write matting result failed:', e);
+      wx.showToast({ title: '抠图结果保存失败', icon: 'none' });
+      return;
+    }
+
+    const done = () => {
+      this.pushHistory();
+      wx.showToast({
+        title: opts.notice || '抠图完成',
+        icon: opts.notice ? 'none' : 'success'
+      });
+    };
+
+    // 1) 对选中图层抠图：只替换该图层的图片，位置/大小/旋转/透明度保持不变
+    if (opts.target === 'layer' && opts.layerId) {
+      const idx = this.getLayerIndex(opts.layerId);
+      if (idx < 0) {
+        wx.showToast({ title: '图层已不存在', icon: 'none' });
+        return;
+      }
+      const layers = [...this.data.layers];
+      layers[idx] = { ...layers[idx], src: filePath };
+      this.setData({ layers }, done);
+      return;
+    }
+
+    // 2) 底图抠图且勾选「生成图层」：结果作为独立图层叠在底图上，可拖动/缩放
+    if (opts.asNewLayer) {
+      const bounds = this.getEditableBounds();
+      const layer = {
+        id: `layer_${Date.now()}_${this.layerSeq++}`,
+        type: 'image',
+        src: filePath,
+        text: '',
+        x: bounds.x,
+        y: bounds.y,
+        w: bounds.width,
+        h: bounds.height,
+        rotation: 0,
+        opacity: 1
+      };
+      this.setData({
+        layers: [...this.data.layers, layer],
+        activeLayerId: layer.id
+      }, () => {
+        this.refreshLayerEditor();
+        done();
+      });
+      return;
+    }
+
+    // 3) 默认：替换底图（PNG，保留透明通道），保存时会自动按 PNG 导出
+    this.setBaseImage(filePath, done);
   },
 
   createStickerLayer(src) {
@@ -551,7 +1078,7 @@ Page({
     if (wasEditing) this.textSession = null;
   },
 
-  onPreviewTap() {
+  onPreviewTap(e) {
     if (this.data.showTextPanel || this.data.showWatermarkPanel || this.data.showAdjustPanel) return;
     if (!this.data.activeLayerId) return;
     this.setData({ activeLayerId: '' }, () => this.refreshLayerEditor());
@@ -569,6 +1096,7 @@ Page({
   // ---------- 历史记录：撤销 / 重做 ----------
   captureSnapshot() {
     return JSON.stringify({
+      baseImage: this.data.baseImage,
       layers: this.data.layers,
       adjustments: this.data.adjustments,
       baseTransform: this.data.baseTransform,
@@ -616,6 +1144,10 @@ Page({
     this.textSession = null;
     this.touchState = null;
     const keepActive = (state.layers || []).some((item) => item.id === this.data.activeLayerId);
+    // 抠图会替换底图，撤销时需要连同底图一起还原
+    const prevBase = this.data.baseImage;
+    const nextBase = state.baseImage === undefined ? prevBase : state.baseImage;
+    const baseChanged = !!nextBase && nextBase !== prevBase;
     this.setData({
       layers: state.layers || [],
       adjustments: state.adjustments || { brightness: 100, contrast: 100, saturation: 100 },
@@ -627,6 +1159,7 @@ Page({
       showAdjustPanel: false
     }, () => {
       this.restoringHistory = false;
+      if (baseChanged) this.setBaseImage(nextBase);
       this.refreshBaseStyle();
       this.refreshLayerEditor();
       this.rebuildWatermarkPreview();
@@ -640,6 +1173,7 @@ Page({
     this.layerSizeRef = layer ? layer.w : 0;
     this.layerFontRef = layer ? (layer.fontSize || 42) : 42;
     this.setData({
+      activeImageLayerId: layer && layer.type === 'image' ? layer.id : '',
       layerEditor: layer ? {
         id: layer.id,
         type: layer.type,
@@ -868,6 +1402,8 @@ Page({
   },
 
   onLayerTouchStart(e) {
+    // 点选抠图时画布只接收点击，不拖动图层
+    if (this.data.mattingPickMode) return;
     if (this.data.showTextPanel || this.data.showWatermarkPanel || this.data.showAdjustPanel) return;
     const id = e.currentTarget.dataset.id;
     if (!id) return;
@@ -1228,7 +1764,9 @@ Page({
       const renderWidth = baseImgInfo.width;
       const renderHeight = baseImgInfo.height;
       // 底图是 PNG 时导出 PNG，保留透明背景（如抠图成品）；否则导出 JPG 控制体积
-      const outputType = String(baseImgInfo.type || '').toLowerCase() === 'png' ? 'png' : 'jpg';
+      const isPngBase = String(baseImgInfo.type || '').toLowerCase() === 'png'
+        || /\.png$/i.test(this.data.baseImage || '');
+      const outputType = isPngBase ? 'png' : 'jpg';
       
       const canvasInfo = await new Promise((resolve, reject) => {
         wx.createSelectorQuery()
@@ -1287,52 +1825,16 @@ Page({
     const saturation = Number(adj.saturation == null ? 100 : adj.saturation);
     const t = this.data.baseTransform || { scale: 100, rotation: 0, flipX: false, flipY: false };
     const scale = (t.scale == null ? 100 : t.scale) / 100;
-    const needPixelFilter = brightness !== 100 || contrast !== 100 || saturation !== 100;
     // 按原始尺寸绘制底图，不添加背景，不缩放；再按用户设置做缩放/旋转/镜像
     ctx.save();
+    if (brightness !== 100 || contrast !== 100 || saturation !== 100) {
+      ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
+    }
     ctx.translate(renderWidth / 2, renderHeight / 2);
     ctx.rotate(((t.rotation || 0) * Math.PI) / 180);
     ctx.scale((t.flipX ? -1 : 1) * scale, (t.flipY ? -1 : 1) * scale);
     ctx.drawImage(img, -renderWidth / 2, -renderHeight / 2, renderWidth, renderHeight);
     ctx.restore();
-
-    // 微信原生 canvas 2d（尤其 iOS 真机）不支持 ctx.filter，改用像素级实现，
-    // 保证「画面调整」的亮度/对比度/饱和度在保存成品图上与预览一致生效
-    if (needPixelFilter) {
-      this.applyPixelAdjust(ctx, renderWidth, renderHeight, brightness, contrast, saturation);
-    }
-  },
-
-  // 像素级亮度/对比度/饱和度调整，对齐 CSS filter 语义与顺序（brightness→contrast→saturate）
-  applyPixelAdjust(ctx, renderWidth, renderHeight, brightness, contrast, saturation) {
-    const image = ctx.getImageData(0, 0, renderWidth, renderHeight);
-    const data = image.data;
-    const b = brightness / 100;
-    const c = contrast / 100;
-    const s = saturation / 100;
-    for (let i = 0; i < data.length; i += 4) {
-      // 跳过全透明像素：不动未被子图覆盖的画布区域，顺带提速
-      if (data[i + 3] === 0) continue;
-      // 亮度
-      let r = data[i] * b;
-      let g = data[i + 1] * b;
-      let bl = data[i + 2] * b;
-      // 对比度（围绕中灰 128）
-      r = c * (r - 128) + 128;
-      g = c * (g - 128) + 128;
-      bl = c * (bl - 128) + 128;
-      // 饱和度（围绕亮度线性插值）
-      if (s !== 1) {
-        const gray = 0.2126 * r + 0.7152 * g + 0.0722 * bl;
-        r = gray + (r - gray) * s;
-        g = gray + (g - gray) * s;
-        bl = gray + (bl - gray) * s;
-      }
-      data[i] = r < 0 ? 0 : r > 255 ? 255 : r;
-      data[i + 1] = g < 0 ? 0 : g > 255 ? 255 : g;
-      data[i + 2] = bl < 0 ? 0 : bl > 255 ? 255 : bl;
-    }
-    ctx.putImageData(image, 0, 0);
   },
 
   async drawLayers(ctx, canvas, renderWidth, renderHeight) {

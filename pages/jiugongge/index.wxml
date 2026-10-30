@@ -181,16 +181,6 @@
     </view>
   </view>
 
-  <!-- 宫格 / 形状 选择入口 -->
-  <view class="layout-toggle-bar" bindtap="toggleLayoutPanel">
-    <text>调整宫格 / 形状</text>
-    <text class="layout-toggle-arrow">▾</text>
-  </view>
-  <view class="layout-drawer-mask {{showLayoutPanel ? 'show' : ''}}" bindtap="closeLayoutPanel"></view>
-  <view class="layout-drawer {{showLayoutPanel ? 'open' : ''}}">
-    <view class="drawer-handle" bindtap="closeLayoutPanel"></view>
-    <scroll-view scroll-y class="drawer-body">
-
   <!-- Grid Template Selector -->
   <view class="grid-selector-container">
     <view class="selector-label">选择宫格</view>
@@ -242,8 +232,6 @@
         </view>
       </view>
       <view wx:if="{{!hasMore && shapeList.length > 0}}" class="no-more-text">已经是全部模板了</view>
-    </scroll-view>
-  </view>
     </scroll-view>
   </view>
   </view>

@@ -35,24 +35,6 @@ Page({
     this.initImages(paths);
   },
 
-  // 放大预览某张已选图片
-  previewImage(e) {
-    const index = e.currentTarget.dataset.index;
-    wx.previewImage({ current: this.data.imagePaths[index], urls: this.data.imagePaths });
-  },
-
-  // 删除单张已选图片
-  deleteImage(e) {
-    const index = e.currentTarget.dataset.index;
-    const imagePaths = this.data.imagePaths.slice();
-    imagePaths.splice(index, 1);
-    if (!imagePaths.length) {
-      this.setData({ imagePaths: [], imagePath: '', currentFormat: '' });
-      return;
-    }
-    this.initImages(imagePaths);
-  },
-
   detectFormat(path) {
     const lowerPath = (path || '').toLowerCase();
     if (lowerPath.endsWith('.png')) return 'PNG';

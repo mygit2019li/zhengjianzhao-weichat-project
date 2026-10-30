@@ -68,9 +68,9 @@ Page({
     }
   },
 
-  // 开始体验 - 点击立即体验按钮（仅弹来源弹窗，选图成功后再进编辑器）
+  // 开始体验 - 点击立即体验按钮（唤起统一来源弹窗）
   startExperience() {
-    this.setData({ showSourceSheet: true });
+    this.setData({ hasStarted: true, showSourceSheet: true });
   },
 
   // 继续添加图片（同一弹窗）
@@ -86,7 +86,7 @@ Page({
   onSourceChosen(e) {
     const paths = (e.detail && e.detail.paths) || [];
     if (!paths.length) return;
-    this.setData({ showSourceSheet: false, hasStarted: true });
+    this.setData({ showSourceSheet: false });
     this.addImages(paths);
   },
 

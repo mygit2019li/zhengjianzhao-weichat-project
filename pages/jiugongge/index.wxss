@@ -609,68 +609,6 @@
   margin-top: 5rpx;
 }
 
-/* 宫格 / 形状 底部抽屉 */
-.layout-toggle-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8rpx;
-  margin: 8rpx 30rpx 0;
-  padding: 22rpx;
-  background: #fff;
-  border-radius: 16rpx;
-  font-size: 28rpx;
-  color: #333;
-}
-.layout-toggle-arrow {
-  font-size: 24rpx;
-  color: #999;
-}
-.layout-drawer-mask {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: 900;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.25s ease;
-}
-.layout-drawer-mask.show {
-  opacity: 1;
-  visibility: visible;
-}
-.layout-drawer {
-  position: fixed;
-  left: 0; right: 0; bottom: 0;
-  z-index: 901;
-  background: #f6f6f6;
-  border-radius: 28rpx 28rpx 0 0;
-  padding: 12rpx 0 calc(20rpx + env(safe-area-inset-bottom));
-  transform: translateY(100%);
-  transition: transform 0.28s ease;
-  max-height: 72vh;
-  display: flex;
-  flex-direction: column;
-}
-.layout-drawer.open {
-  transform: translateY(0);
-}
-.drawer-handle {
-  width: 60rpx;
-  height: 8rpx;
-  border-radius: 8rpx;
-  background: #d0d0d0;
-  margin: 8rpx auto 16rpx;
-}
-.drawer-body {
-  flex: 1;
-  min-height: 0;
-}
-.layout-drawer .grid-selector-container,
-.layout-drawer .shape-selector-container {
-  margin: 12rpx 24rpx 20rpx;
-}
-
 .tip-text {
   text-align: center;
   font-size: 24rpx;

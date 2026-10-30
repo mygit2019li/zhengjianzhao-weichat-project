@@ -75,9 +75,26 @@
             {{watermarkPreview.text}}
           </view>
         </view>
+
+        <canvas
+          wx:if="{{mattingPickMode}}"
+          type="2d"
+          id="pickCanvas"
+          class="pick-canvas"
+          disable-scroll="{{true}}"
+          bindtouchstart="onBrushTouchStart"
+          bindtouchmove="onBrushTouchMove"
+          bindtouchend="onBrushTouchEnd"
+          bindtouchcancel="onBrushTouchEnd"
+        ></canvas>
+
+        <view wx:if="{{mattingPickMode}}" class="pick-hint" catchtap="noop">
+          <text class="pick-hint-text">按住涂抹要抠的物体，松手抠出</text>
+          <view class="pick-hint-cancel" catchtap="onCancelPickMode">取消</view>
+        </view>
       </view>
     </view>
-    <view class="tip-text">拖动贴图/文字可移动，双指缩放旋转；顶部可撤销/重做</view>
+    <view class="tip-text">拖动贴图/文字可移动，双指缩放旋转；抠图后可保存透明背景，顶部可撤销/重做</view>
   </view>
 
   <view class="bottom-bar">
@@ -99,6 +116,12 @@
           <image src="/images/icon/编辑.svg" class="action-icon" mode="aspectFit"></image>
         </view>
         <text class="action-text">水印</text>
+      </view>
+      <view class="action-item {{matting ? 'action-item-disabled' : ''}}" bindtap="onOpenMattingPanel">
+        <view class="action-icon-wrap">
+          <image src="/images/icon/抠图.svg" class="action-icon" mode="aspectFit"></image>
+        </view>
+        <text class="action-text">{{matting ? '抠图中' : '抠图'}}</text>
       </view>
       <view class="action-item {{activeLayerId ? '' : 'action-item-disabled'}}" bindtap="onDeleteActiveLayer">
         <view class="action-icon-wrap">
@@ -210,6 +233,47 @@
         <slider min="8" max="72" value="{{watermarkDraft.size}}" show-value bindchange="onWatermarkSizeChange" bindchanging="onWatermarkSizeChange" />
       </view>
     </view>
+  </view>
+
+  <view wx:if="{{showMattingPanel}}" class="panel-mask" bindtap="closeMattingPanel"></view>
+  <view wx:if="{{showMattingPanel}}" class="setting-panel matting-panel" catchtap="noop">
+    <view class="panel-head">
+      <view class="panel-close" bindtap="closeMattingPanel">关闭</view>
+      <view class="panel-title">抠图</view>
+      <view class="panel-ok" bindtap="onStartMatting">开始</view>
+    </view>
+
+    <view class="pick-entry" catchtap="onStartPickMode">
+      <view class="pick-entry-main">
+        <view class="pick-entry-title">画笔框选</view>
+        <view class="pick-entry-desc">按住把物体涂一下，松手自动抠成图层</view>
+      </view>
+      <view class="pick-entry-go">去涂抹</view>
+    </view>
+
+    <view class="panel-row">
+      <text class="slider-label">抠图对象</text>
+      <view class="layer-btn-group">
+        <view class="layer-btn {{mattingTarget === 'base' ? 'active' : ''}}" data-target="base" bindtap="onPickMattingTarget">底图</view>
+        <view class="layer-btn {{mattingTarget === 'layer' ? 'active' : ''}} {{activeImageLayerId ? '' : 'layer-btn-disabled'}}" data-target="layer" bindtap="onPickMattingTarget">选中图层</view>
+      </view>
+    </view>
+
+    <view class="panel-row">
+      <text class="slider-label">抠图类型</text>
+      <view class="layer-btn-group">
+        <view class="layer-btn {{mattingMode === 'auto' ? 'active' : ''}}" data-mode="auto" bindtap="onPickMattingMode">自动</view>
+        <view class="layer-btn {{mattingMode === 'portrait' ? 'active' : ''}}" data-mode="portrait" bindtap="onPickMattingMode">人像</view>
+        <view class="layer-btn {{mattingMode === 'general' ? 'active' : ''}}" data-mode="general" bindtap="onPickMattingMode">通用</view>
+      </view>
+    </view>
+
+    <view wx:if="{{mattingTarget === 'base'}}" class="panel-row">
+      <text class="slider-label">生成图层</text>
+      <switch checked="{{mattingAsNewLayer}}" bindchange="onMattingAsNewLayerChange" />
+    </view>
+
+    <view class="matting-tip">「画笔框选」把要抠的物体涂一下，松手就单独抠成图层，适合一张图里有多个主体；「自动/通用」是整张图去背景，开启「生成图层」会把主体变成可拖动的独立图层。</view>
   </view>
 
   <view wx:if="{{showAdjustPanel}}" class="panel-mask" bindtap="closeAdjustPanel"></view>

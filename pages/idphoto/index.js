@@ -1,4 +1,5 @@
 const Security = require('../../utils/security.js');
+const { checkImageSize } = require('../../utils/util.js');
 const NSFW = require('../../utils/nsfw.js');
 const ContentSecurity = require('../../utils/content-security.js');
 const { ID_PHOTO_COLORS, compositeBackground, base64ToTempFile } = require('../../utils/image-processor.js');

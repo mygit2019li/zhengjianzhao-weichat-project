@@ -4,31 +4,22 @@
     <text class="subtitle">支持 JPG / PNG 互转</text>
   </view>
 
-  <!-- 图片预览：空状态 -->
-  <view class="preview-area" wx:if="{{!imagePaths.length}}" bindtap="chooseImage">
-    <view class="placeholder">
-      <image src="/images/icon/add-image.svg" class="add-icon"></image>
-      <text>点击选择图片（最多 20 张）</text>
-    </view>
+  <!-- 图片预览 -->
+  <view class="preview-area" bindtap="chooseImage">
+    <block wx:if="{{imagePath}}">
+      <image src="{{imagePath}}" mode="aspectFit" class="preview-img"></image>
+      <view class="file-info">当前格式: {{currentFormat}} · 已选{{imagePaths.length || 1}}张</view>
+    </block>
+    <block wx:else>
+      <view class="placeholder">
+        <image src="/images/icon/add-image.svg" class="add-icon"></image>
+        <text>点击选择图片</text>
+      </view>
+    </block>
   </view>
 
-  <!-- 图片预览：已选缩略图网格（可逐张删除 / 放大查看） -->
-  <block wx:else>
-    <view class="grid-summary">已选 {{imagePaths.length}}/20 张 · 当前格式 {{currentFormat}}</view>
-    <scroll-view scroll-y class="image-grid-wrap">
-      <view class="image-grid">
-        <view class="grid-item" wx:for="{{imagePaths}}" wx:key="*this">
-          <image src="{{item}}" mode="aspectFill" class="thumb" bindtap="previewImage" data-index="{{index}}"></image>
-          <view class="delete-btn" catchtap="deleteImage" data-index="{{index}}">
-            <image src="/images/icon/close.svg" class="delete-icon"></image>
-          </view>
-        </view>
-      </view>
-    </scroll-view>
-  </block>
-
   <!-- 控制区域 -->
-  <view class="controls-area" wx:if="{{imagePaths.length}}">
+  <view class="controls-area" wx:if="{{imagePath}}">
     <view class="format-selector">
       <text class="section-title">目标格式</text>
       <radio-group class="radio-group" bindchange="onFormatChange">

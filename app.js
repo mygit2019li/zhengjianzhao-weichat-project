@@ -72,14 +72,16 @@ App({
   },
   globalData: {
     userInfo: null,
-    apiUrl: 'https://api.zjzxcx.top/py',
+    // 本地调试：Python 服务（python-project）跑在 127.0.0.1:8087
+    // 真机预览时把 127.0.0.1 换成本机局域网 IP，例如 http://10.1.6.65:8087
+    apiUrl: 'http://127.0.0.1:8087',
     goapiUrl: 'https://api.zjzxcx.top',
     fontUrl: 'https://api.zjzxcx.top/font/',
     liteFontsLoaded: false,
     fullFontsLoaded: false,
-    // apiUrl: 'http://127.0.0.1:8087',
+    // 线上地址（发布前切回）：
+    // apiUrl: 'https://api.zjzxcx.top/py',
     // goapiUrl: 'http://127.0.0.1:8088',
-    // fontUrl: 'https://api.zjzxcx.top/font/',
     appId: 'wx_123456789', // 模拟 APP_ID
     apiSecretKey: '1234567890abcdef1234567890abcdef', // 128-bit or 256-bit key
     ColorList: [{

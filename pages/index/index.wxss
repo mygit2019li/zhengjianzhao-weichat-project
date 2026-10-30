@@ -30,7 +30,7 @@
 /* Hero Banner */
 .hero-section {
   width: 100%;
-  height: 520rpx;
+  height: 468rpx;
   position: relative;
   overflow: hidden;
 }
@@ -460,7 +460,7 @@
 /* 响应式适配 */
 @media (max-width: 375px) {
   .hero-section {
-    height: 460rpx;
+    height: 414rpx;
   }
 
   .primary-main-title,

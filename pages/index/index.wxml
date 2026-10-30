@@ -142,7 +142,7 @@
   </view>
 
   <!-- 图片来源选择弹窗（统一组件） -->
-  <image-source-sheet show="{{showPuzzleSourceSheet}}" count="{{sourceSheetScene === 'puzzle' ? 9 : 1}}"
+  <image-source-sheet show="{{showPuzzleSourceSheet}}" count="{{9}}"
                       sources="{{['album', 'chat', 'camera']}}"
                       bind:chosen="onImageSourceChosen" bind:close="closePuzzleSourceSheet" />
 

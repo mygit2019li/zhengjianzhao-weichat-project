@@ -157,10 +157,9 @@ Page({
     this.setData({ showSourceSheet: false });
   },
 
-  // 统一弹窗选图完成（组件已做鉴黄；压缩页不限制单张大小）
+  // 统一弹窗选图完成（组件已做大小校验 + 鉴黄）
   onSourceChosen(e) {
-    const left = 20 - this.data.imageList.length;
-    const paths = ((e.detail && e.detail.paths) || []).slice(0, left);
+    const paths = (e.detail && e.detail.paths) || [];
     if (!paths.length) return;
     this.setData({ showSourceSheet: false });
     this.addImages(paths);
